@@ -1,0 +1,35 @@
+{
+  "name": "timenzo",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --mode development",
+    "build": "vite build --mode production",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fullcalendar/core": "^6.1.10",
+    "@fullcalendar/daygrid": "^6.1.10",
+    "@fullcalendar/interaction": "^6.1.10",
+    "@fullcalendar/timegrid": "^6.1.10",
+    "@fullcalendar/vue3": "^6.1.10",
+    "@quasar/extras": "^1.17.0",
+    "axios": "^1.9.0",
+    "countries-and-timezones": "^3.8.0",
+    "latest": "^0.2.0",
+    "lodash": "^4.17.21",
+    "luxon": "^3.6.1",
+    "pinia": "^3.0.2",
+    "quasar": "^2.18.1",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.1"
+  },
+  "devDependencies": {
+    "@quasar/vite-plugin": "^1.9.0",
+    "@vitejs/plugin-vue": "^5.2.3",
+    "sass": "^1.89.0",
+    "sass-embedded": "^1.89.0",
+    "vite": "^6.3.5"
+  }
+}
