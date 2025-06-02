@@ -1,5 +1,5 @@
 <script setup>
-
+import NavbarMenu from "@/components/navbar/NavbarMenu.vue";
 </script>
 
 <template>
@@ -12,7 +12,7 @@
 
       <q-toolbar-title>Quasar Framework</q-toolbar-title>
 
-      <q-btn flat round dense icon="whatshot"></q-btn>
+      <navbar-menu/>
     </q-toolbar>
   </q-header>
 </template>

@@ -1,31 +1,13 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { useCountryStore } from '@/store/countries';
-import { useCurrentPositionStore } from '@/store/currentPosition';
-import CountrySelect from '@/components/CountrySelect.vue';
-import { loginUser } from "@/services/auth.js";
+import { ref, onMounted } from 'vue';
 import { getCities, getLocations } from "@/services/dictionaries.js";
-import debounce from 'lodash/debounce';
-
-const countryStore = useCountryStore();
-const positionStore = useCurrentPositionStore();
+import debounce from 'lodash/debounce'
 
 const searchQuery = ref('');
 const locationSuggestions = ref([]);
 const selectedLocation = ref(null);
 
-const isCitiesLoaded = computed(() => !countryStore.loading && countryStore.cities.length > 0);
-
-onMounted(async () => {
-  try {
-    await Promise.all([
-      countryStore.loadCities(),
-      positionStore.loadCurrentPosition(),
-    ]);
-  } catch (error) {
-    console.error('Error loading data:', error);
-  }
-});
+onMounted(async () => {});
 
 const citiesList = async () => {
   try {
@@ -86,34 +68,6 @@ function selectLocation(loc) {
         </li>
       </ul>
     </div>
-
-
-    <h2>Список городов:</h2>
-    <country-select></country-select>
-
-    <!-- Display current position -->
-    <div v-if="positionStore.loading">Loading current position...</div>
-    <div v-else-if="positionStore.error">
-      Error loading position: {{ positionStore.error }}
-    </div>
-    <div v-else-if="positionStore.country">
-      <h3>Current Country: {{ positionStore.country.name }}</h3>
-    </div>
-    <div v-else>Unable to determine current country</div>
-
-    <!-- Display cities list -->
-    <div v-if="countryStore.loading">Loading cities...</div>
-    <div v-else-if="countryStore.error">
-      Error loading cities: {{ countryStore.error }}
-    </div>
-    <div v-else-if="isCitiesLoaded">
-      <ul>
-        <li v-for="city in countryStore.cities" :key="city.id">
-          {{ city.name }}, {{ city.country }} ({{ city.timezone }})
-        </li>
-      </ul>
-    </div>
-    <div v-else>No cities available</div>
   </div>
 </template>
 
