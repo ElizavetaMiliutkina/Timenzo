@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { getCities, getLocations } from "@/services/dictionaries.js";
+import { getLocations } from "@/services/dictionaries.js";
 import debounce from 'lodash/debounce'
 
 const searchQuery = ref('');
@@ -8,17 +8,6 @@ const locationSuggestions = ref([]);
 const selectedLocation = ref(null);
 
 onMounted(async () => {});
-
-const citiesList = async () => {
-  try {
-    const response = getCities()
-    if(response){
-      console.log(response, 'response')
-    }
-  } catch (error) {
-    console.error('Error loading data:', error);
-  }
-}
 
 const fetchLocations = debounce(async (query) => {
   if (query.length < 2) {
@@ -48,7 +37,6 @@ function selectLocation(loc) {
 
 <template>
   <div>
-    <button type="submit" class="btn btn-primary" @click="citiesList">Submit</button>
 
     <div class="autocomplete-container">
       <input

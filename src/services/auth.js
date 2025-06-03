@@ -1,5 +1,6 @@
 import axios from '@/plugins/axios.js'
 import router from '@/router'
+import { useAuthStore } from '@/store/auth.js'
 
 export const registerUser = async (email, username, password ) => {
     try {
@@ -19,6 +20,8 @@ export const registerUser = async (email, username, password ) => {
     }
 }
 export const loginUser = async (email, username, password ) => {
+    const authStore = useAuthStore()
+
     try {
         const response = await axios.post('/login', {
             email,
@@ -28,8 +31,8 @@ export const loginUser = async (email, username, password ) => {
 
         const data = response.data
 
-        localStorage.setItem('access_token', data.access_token)
-        localStorage.setItem('refresh_token', data.refresh_token)
+        authStore.setTokens(data.access_token, data.refresh_token)
+        authStore.setUser(data.user)
 
         router.push('/home')
 

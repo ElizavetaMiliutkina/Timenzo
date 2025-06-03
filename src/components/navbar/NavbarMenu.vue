@@ -1,11 +1,12 @@
 <script setup>
 import {useRouter} from "vue-router";
+import {useAuthStore} from "@/store/auth.js"
 
 const router = useRouter()
+const authStore = useAuthStore()
 
 function onLogout() {
-  localStorage.removeItem('access_token')
-  localStorage.removeItem('refresh_token')
+  authStore.logout()
   router.push('/login')
 }
 
@@ -15,7 +16,7 @@ function onLogout() {
     <div class="q-pa-md">
       <q-btn-dropdown color="blue" label="" dropdown-icon="change_history">
         <q-list>
-          <q-item clickable v-close-popup @click="onItemClick">
+          <q-item clickable v-close-popup @click="">
             <q-item-section>
               <q-item-label>Settings</q-item-label>
             </q-item-section>
