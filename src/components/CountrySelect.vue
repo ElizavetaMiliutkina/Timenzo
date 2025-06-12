@@ -1,6 +1,7 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useCountryStore } from '@/store/countries';
+import { City } from "@/types/location";
 
 const store = useCountryStore();
 const search = ref('');
@@ -19,7 +20,7 @@ const filteredCities = computed(() => {
 });
 
 // Select a city and update search input
-function selectCity(city) {
+function selectCity(city: City) {
   search.value = `${city.name}, ${city.country} (${city.timezone})`;
   // Optionally emit the selected city for parent component
   // emit('select-city', city);

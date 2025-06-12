@@ -35,20 +35,17 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { loginUser } from "@/services/auth.js";
+import { loginUser } from "@/services/auth";
 
 const email = ref('')
 const password = ref('')
 const username = ref('')
 const error = ref('')
-const router = useRouter()
 
-function handleLogin() {
+async function handleLogin() {
   error.value = ''
-  // Простая проверка (заглушка)
   if (!email.value || !password.value) {
     error.value = 'Пожалуйста, заполните все поля'
     return
@@ -56,12 +53,12 @@ function handleLogin() {
   username.value = email.value.slice(0, email.value.indexOf('@'));
 
   try {
-    const response = loginUser(email.value, username.value, password.value)
-    if(response){
-      console.log(response, 'response')
-      success.value = 'Регистрация прошла успешно! Перенаправляем на вход...'
-      router.push('/')
+    let payload = {
+      email: email.value,
+      username: username.value,
+      password: password.value
     }
+    await loginUser(payload)
   } catch (error) {
     console.log(error)
   }

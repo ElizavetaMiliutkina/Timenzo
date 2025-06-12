@@ -1,9 +1,9 @@
-import axios from '@/plugins/axios.js'
+import axios from '@/plugins/axios'
 
-export const getLocations = async (query) => {
+export const getLocations = async (query: string) => {
     try {
         const response = await axios.get(`/search-locations?query=${query}`)
-        return response;
+        return response.data;
     } catch (error) {
         return  error;
     }

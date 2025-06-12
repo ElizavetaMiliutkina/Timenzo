@@ -1,17 +1,23 @@
 import { defineStore } from 'pinia'
+import { User } from '@/types/user'
 
 export const useAuthStore = defineStore('user', {
-    state: () => ({
+    state: (): {
+        user: User | null;
+        accessToken: string;
+        refreshToken: string;
+    } => ({
         user: null,
         accessToken: localStorage.getItem('access_token') || '',
         refreshToken: localStorage.getItem('refresh_token') || ''
     }),
     actions: {
-        setUser(userData) {
+        setUser(userData: User) {
             this.user = userData
-            localStorage.setItem('user', userData)
+            console.log(userData, 'userData')
+            localStorage.setItem('user', JSON.stringify(userData))
         },
-        setTokens(access, refresh) {
+        setTokens(access: string, refresh: string) {
             this.accessToken = access
             this.refreshToken = refresh
             localStorage.setItem('access_token', access)

@@ -47,10 +47,10 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { registerUser } from '@/services/auth.js'
+import { registerUser } from '@/services/auth'
 
 const email = ref('')
 const password = ref('')
@@ -60,7 +60,7 @@ const error = ref('')
 const success = ref('')
 const router = useRouter()
 
-function handleRegister() {
+async function handleRegister() {
   error.value = ''
   success.value = ''
 
@@ -76,7 +76,12 @@ function handleRegister() {
   username.value = email.value.slice(0, email.value.indexOf('@'));
 
   try {
-    const response = registerUser(email.value, username.value, password.value)
+    let payload = {
+      email: email.value,
+      username: username.value,
+      password: password.value
+    }
+    const response = await registerUser(payload)
     if(response){
       success.value = 'Регистрация прошла успешно! Перенаправляем на вход...'
       router.push('/')

@@ -1,36 +1,39 @@
-<script setup>
-import { ref, onMounted } from 'vue';
-import { getLocations } from "@/services/dictionaries.js";
+<script setup lang="ts">
+import { ref } from 'vue';
+import { getLocations } from "@/services/dictionaries";
 import debounce from 'lodash/debounce'
 
-const searchQuery = ref('');
-const locationSuggestions = ref([]);
-const selectedLocation = ref(null);
+interface LocationOption {
+  value: string;
+  label: string;
+}
 
-onMounted(async () => {});
+const searchQuery = ref<string>('');
+const locationSuggestions = ref<LocationOption[]>([]);
+const selectedLocation = ref<LocationOption | null>(null);
 
-const fetchLocations = debounce(async (query) => {
+const fetchLocations = debounce(async (query: string) => {
   if (query.length < 2) {
     locationSuggestions.value = [];
     return;
   }
   try {
-    const res = await getLocations(query);
-    locationSuggestions.value = res.data || [];
+    const response = await getLocations(query);
+    locationSuggestions.value = response as LocationOption[] || [];
   } catch (error) {
     console.error('Error fetching locations:', error);
     locationSuggestions.value = [];
   }
 }, 300);
 
-function onInputChange(val) {
+function onInputChange(val: string) {
   searchQuery.value = val;
   fetchLocations(val);
 }
 
-function selectLocation(loc) {
+function selectLocation(loc: LocationOption) {
   selectedLocation.value = loc;
-  searchQuery.value = `${loc.label}`;
+  searchQuery.value = loc.label;
   locationSuggestions.value = [];
 }
 </script>
@@ -41,7 +44,7 @@ function selectLocation(loc) {
     <div class="autocomplete-container">
       <input
           v-model="searchQuery"
-          @input="onInputChange($event.target.value)"
+          @input="onInputChange(($event.target as HTMLInputElement).value)"
           placeholder="Введите город..."
           class="input-search"
       />

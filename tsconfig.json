@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "strict": true,
+    "jsx": "preserve",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "allowJs": true,                     // 👈 позволяет использовать .js
+    "checkJs": false,                    // 👈 не проверять js-файлы
+    "resolveJsonModule": true           // 👈 позволяет импортировать .json
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.vue",
+    "src/**/*.js"                       // 👈 временно, пока мигрируешь
+  ],
+  "exclude": ["node_modules"]
+}

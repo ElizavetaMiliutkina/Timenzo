@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import NavbarMenu from "@/components/navbar/NavbarMenu.vue";
 </script>
 
