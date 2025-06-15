@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, reactive, defineEmits, defineProps } from 'vue'
+import { EventData } from '@/types/calendar'
+import type { QForm } from 'quasar'
 
 const props = defineProps({
   modelValue: Boolean,
@@ -9,7 +11,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'submit'])
 
 const isOpen = ref(false)
-const formRef = ref(null)
+const formRef = ref<QForm | null>(null)
 
 const timeOptions = [
   '08:00', '08:30',
@@ -28,14 +30,15 @@ const timeOptions = [
 ]
 
 
-const form = reactive({
-  name: '',
+
+const form = reactive<EventData>({
+  title: '',
   price: 0,
   description: '',
   date: '',
   time_start: '',
   time_end: '',
-  datetime: ''
+  datetime: '',
 })
 
 watch(() => props.modelValue, val => {
@@ -47,8 +50,8 @@ watch(() => props.modelValue, val => {
 })
 
 function updateDatetime() {
-  if (form.date && form.time) {
-    form.datetime = `${form.date} ${form.time}`
+  if (form.date && form.time_start && form.time_end) {
+    form.datetime = `${form.date} ${form.time_start}-${form.time_end}`
   }
 }
 
@@ -58,8 +61,8 @@ function closeModal() {
 }
 
 function resetForm() {
-  form.name = ''
-  form.price = null
+  form.title = ''
+  form.price = 0
   form.description = ''
   form.date = ''
   form.time_start = ''
@@ -68,17 +71,21 @@ function resetForm() {
 }
 
 async function onSubmit() {
+  if (!formRef.value) return
   const isValid = await formRef.value.validate()
   if (!isValid) return
 
-  emit('submit', {
-    name: form.name,
+  const payload: EventData = {
+    title: form.title,
     price: Number(form.price),
     description: form.description,
     date: form.date,
     time_start: form.time_start,
-    time_end: form.time_end
-  })
+    time_end: form.time_end,
+    datetime: form.datetime,
+  }
+
+  emit('submit', payload)
   closeModal()
 }
 </script>
@@ -94,9 +101,9 @@ async function onSubmit() {
         <q-form ref="formRef" @submit.prevent="onSubmit" class="q-gutter-md">
           <q-input
               filled
-              v-model="form.name"
-              label="Name *"
-              :rules="[val => !!val || 'Enter Name']"
+              v-model="form.title"
+              label="Title *"
+              :rules="[val => !!val || 'Enter Title']"
           />
 
           <q-input

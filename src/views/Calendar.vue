@@ -1,44 +1,63 @@
-<script setup>
-import { ref } from 'vue'
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
-import { INITIAL_EVENTS, createEventId } from '../utils/event-utils.js'
+import {
+  DateSelectArg,
+  EventClickArg,
+  EventApi,
+  EventInput
+} from '@fullcalendar/core';
+import { INITIAL_EVENTS, createEventId } from '../utils/event-utils'
 import ScheduleFormModal from "@/components/calendar/ScheduleFormModal.vue";
-import {postEvent} from "@/services/calendar.js";
+import {postEvent, getEvents} from "@/services/calendar";
+import {EventData} from "@/types/calendar";
 
-const currentEvents = ref([])
+const currentEvents = ref<any[]>([]);
+const isModalOpen = ref(false);
+const selectedRange = ref<DateSelectArg | null>(null);
+
+onMounted(async () => {
+  const events = await getEvents()
+  const mapped: EventInput[] = events.map((e: EventData) => ({
+    id: e.id?.toString() || createEventId(),
+    title: e.title,
+    start: `${e.date}T${e.time_start}`,
+    end: `${e.date}T${e.time_end}`,
+    extendedProps: { price: e.price, description: e.description }
+  }))
+  calendarOptions.value.initialEvents = mapped
+})
 
 const handleWeekendsToggle = () => {
   calendarOptions.value.weekends = !calendarOptions.value.weekends
 }
 
-const isModalOpen = ref(false)
-const selectedRange = ref(null)
-
-const handleDateSelect = (selectInfo) => {
+const handleDateSelect = (selectInfo: DateSelectArg) => {
+  console.log(selectInfo, 'selectInfo')
   selectedRange.value = selectInfo
   isModalOpen.value = true
 }
 
-const handleModalSubmit = async (formData) => {
+const handleModalSubmit = async (formData: EventData) => {
   console.log(formData, 'formData')
-  await postEvent(formData)
-  const calendarApi = selectedRange.value.view.calendar
-  calendarApi.unselect()
+  await postEvent(formData);
+  const calendarApi = selectedRange.value!.view.calendar;
+  calendarApi.unselect();
 
   calendarApi.addEvent({
     id: createEventId(),
     title: formData.title,
-    start: selectedRange.value.startStr,
-    end: selectedRange.value.endStr,
+    start: selectedRange.value!.startStr,
+    end: selectedRange.value!.endStr,
     extendedProps: {
       price: formData.price,
       description: formData.description
     },
-    allDay: selectedRange.value.allDay
-  })
+    allDay: selectedRange.value!.allDay
+  });
 
   isModalOpen.value = false
 }
@@ -61,17 +80,30 @@ const handleModalSubmit = async (formData) => {
 //   }
 // }
 
-const handleEventClick = (clickInfo) => {
+const handleEventClick = (clickInfo: EventClickArg) => {
   if (confirm(`Are you sure you want to delete the event '${clickInfo.event.title}'`)) {
     clickInfo.event.remove()
   }
 }
 
-const handleEvents = (events) => {
+const handleEvents = (events: EventApi[]) => {
   currentEvents.value = events
 }
 
-const calendarOptions = ref({
+const calendarOptions = ref<{
+  plugins: any[];
+  headerToolbar: Record<string, string>;
+  initialView: string;
+  initialEvents: EventInput[];
+  editable: boolean;
+  selectable: boolean;
+  selectMirror: boolean;
+  dayMaxEvents: boolean;
+  weekends: boolean;
+  select: (info: DateSelectArg) => void;
+  eventClick: (info: EventClickArg) => void;
+  eventsSet: (events: EventApi[]) => void;
+}>({
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
   headerToolbar: {
     left: 'prev,next today',
@@ -79,7 +111,7 @@ const calendarOptions = ref({
     right: 'dayGridMonth,timeGridWeek,timeGridDay'
   },
   initialView: 'dayGridMonth',
-  initialEvents: INITIAL_EVENTS,
+  initialEvents: INITIAL_EVENTS as EventInput[],
   editable: true,
   selectable: true,
   selectMirror: true,
@@ -88,7 +120,7 @@ const calendarOptions = ref({
   select: handleDateSelect,
   eventClick: handleEventClick,
   eventsSet: handleEvents
-})
+});
 </script>
 
 <template>
