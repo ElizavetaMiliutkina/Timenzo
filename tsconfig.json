@@ -12,14 +12,14 @@
     "paths": {
       "@/*": ["src/*"]
     },
-    "allowJs": true,                     // 👈 позволяет использовать .js
-    "checkJs": false,                    // 👈 не проверять js-файлы
-    "resolveJsonModule": true           // 👈 позволяет импортировать .json
+    "allowJs": true,
+    "checkJs": false,
+    "resolveJsonModule": true
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.vue",
-    "src/**/*.js"                       // 👈 временно, пока мигрируешь
+    "src/**/*.js"
   ],
   "exclude": ["node_modules"]
 }
