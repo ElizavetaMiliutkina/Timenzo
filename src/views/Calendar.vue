@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -19,6 +19,8 @@ const currentEvents = ref<any[]>([]);
 const isModalOpen = ref(false);
 const selectedRange = ref<DateSelectArg | null>(null);
 
+const calendarRef = ref<any>(null)
+
 onMounted(async () => {
   const events = await getEvents()
   const mapped: EventInput[] = events.map((e: EventData) => ({
@@ -28,7 +30,15 @@ onMounted(async () => {
     end: `${e.date}T${e.time_end}`,
     extendedProps: { price: e.price, description: e.description }
   }))
-  calendarOptions.value.initialEvents = mapped
+
+  await nextTick() // дождаться, пока FullCalendar отрендерится
+
+  const calendarApi = calendarRef.value?.getApi?.()
+  if (calendarApi) {
+    mapped.forEach(event => calendarApi.addEvent(event))
+  } else {
+    console.error('calendarApi is not available')
+  }
 })
 
 const handleWeekendsToggle = () => {
@@ -111,7 +121,7 @@ const calendarOptions = ref<{
     right: 'dayGridMonth,timeGridWeek,timeGridDay'
   },
   initialView: 'dayGridMonth',
-  initialEvents: INITIAL_EVENTS as EventInput[],
+  initialEvents: [],
   editable: true,
   selectable: true,
   selectMirror: true,
@@ -156,6 +166,7 @@ const calendarOptions = ref<{
     </div>
     <div class="demo-app-main">
       <FullCalendar
+          ref="calendarRef"
           class="demo-app-calendar"
           :options="calendarOptions"
       >
