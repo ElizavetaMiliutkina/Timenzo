@@ -7,5 +7,6 @@ export interface EventData {
     time_end: string;
     time_start: string;
     datetime?: string;
+    completed: boolean;
 }
 

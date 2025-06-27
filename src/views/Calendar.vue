@@ -100,7 +100,14 @@ const handleEventClick = (clickInfo: EventClickArg) => {
 }
 
 const handleEvents = (events: EventApi[]) => {
-  currentEvents.value = events
+  const now = new Date();
+
+  currentEvents.value = events.filter(event => {
+    const end = event.end || event.start
+    const completed = event.extendedProps?.completed
+    if (!end) return false;
+    return new Date(end) <= now && completed === false
+  })
 }
 
 const calendarOptions = ref<{
@@ -139,7 +146,6 @@ const calendarOptions = ref<{
   eventClick: handleEventClick,
   eventsSet: handleEvents,
   events: async (info, successCallback, failureCallback) => {
-    console.log(info, 'info')
     try {
       const events = await getEvents(
           formatDate(info.start),
@@ -150,7 +156,11 @@ const calendarOptions = ref<{
         title: e.title,
         start: `${e.date}T${e.time_start}`,
         end: `${e.date}T${e.time_end}`,
-        extendedProps: { price: e.price, description: e.description }
+        extendedProps: {
+          price: e.price,
+          description: e.description,
+          completed: e.completed
+        }
       }))
       successCallback(mapped)
     } catch (error) {
