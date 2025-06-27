@@ -9,9 +9,9 @@ export const postEvent = async (payload: EventData) => {
         return  error;
     }
 }
-export const getEvents = async (): Promise<EventData[]> => {
+export const getEvents = async (start: string, end: string): Promise<EventData[]> => {
     try {
-        const response = await axios.get<EventData[]>('/events')
+        const response = await axios.get<EventData[]>(`/events?start=${start}&end=${end}`)
         return response.data
     } catch (error) {
         console.error('Error fetching events', error)

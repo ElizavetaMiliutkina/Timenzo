@@ -21,24 +21,27 @@ const selectedRange = ref<DateSelectArg | null>(null);
 
 const calendarRef = ref<any>(null)
 
+const formatDate = (date: Date) =>
+    date.toISOString().slice(0, 10);
+
 onMounted(async () => {
-  const events = await getEvents()
-  const mapped: EventInput[] = events.map((e: EventData) => ({
-    id: e.id?.toString() || createEventId(),
-    title: e.title,
-    start: `${e.date}T${e.time_start}`,
-    end: `${e.date}T${e.time_end}`,
-    extendedProps: { price: e.price, description: e.description }
-  }))
-
-  await nextTick() // дождаться, пока FullCalendar отрендерится
-
-  const calendarApi = calendarRef.value?.getApi?.()
-  if (calendarApi) {
-    mapped.forEach(event => calendarApi.addEvent(event))
-  } else {
-    console.error('calendarApi is not available')
-  }
+  // const events = await getEvents()
+  // const mapped: EventInput[] = events.map((e: EventData) => ({
+  //   id: e.id?.toString() || createEventId(),
+  //   title: e.title,
+  //   start: `${e.date}T${e.time_start}`,
+  //   end: `${e.date}T${e.time_end}`,
+  //   extendedProps: { price: e.price, description: e.description }
+  // }))
+  //
+  // await nextTick() // дождаться, пока FullCalendar отрендерится
+  //
+  // const calendarApi = calendarRef.value?.getApi?.()
+  // if (calendarApi) {
+  //   mapped.forEach(event => calendarApi.addEvent(event))
+  // } else {
+  //   console.error('calendarApi is not available')
+  // }
 })
 
 const handleWeekendsToggle = () => {
@@ -113,6 +116,11 @@ const calendarOptions = ref<{
   select: (info: DateSelectArg) => void;
   eventClick: (info: EventClickArg) => void;
   eventsSet: (events: EventApi[]) => void;
+  events: (
+      info: { start: Date; end: Date; startStr: string; endStr: string; timeZone: string },
+      successCallback: (events: EventInput[]) => void,
+      failureCallback: (error: any) => void
+  ) => void;
 }>({
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
   headerToolbar: {
@@ -129,7 +137,27 @@ const calendarOptions = ref<{
   weekends: true,
   select: handleDateSelect,
   eventClick: handleEventClick,
-  eventsSet: handleEvents
+  eventsSet: handleEvents,
+  events: async (info, successCallback, failureCallback) => {
+    console.log(info, 'info')
+    try {
+      const events = await getEvents(
+          formatDate(info.start),
+          formatDate(info.end)
+      );
+      const mapped: EventInput[] = events.map((e: EventData) => ({
+        id: e.id?.toString() || createEventId(),
+        title: e.title,
+        start: `${e.date}T${e.time_start}`,
+        end: `${e.date}T${e.time_end}`,
+        extendedProps: { price: e.price, description: e.description }
+      }))
+      successCallback(mapped)
+    } catch (error) {
+      console.error("Error fetching events:", error)
+      failureCallback(error)
+    }
+  }
 });
 </script>
 
