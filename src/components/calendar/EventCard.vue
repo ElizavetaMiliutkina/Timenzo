@@ -21,11 +21,10 @@ const completeEv = async (id: string) => {
 
     <div v-for="event in events" :key="event.id" class="calendar-card">
       <div class="calendar-card__header">
-        <div>{{ format(parseISO(event.startStr), 'dd.MM.yyyy') }} </div>
-        <div>{{ format(parseISO(event.startStr), 'HH:mm') }}</div>
+        <div>{{ event.title }}</div>
+        <div>{{ format(parseISO(event.startStr), 'dd.MM') }} - {{ format(parseISO(event.startStr), 'HH:mm') }}</div>
       </div>
 <!--      <div class="calendar-card__body">-->
-<!--        <div>{{ event.title }}</div>-->
 <!--        <div>{{ event.extendedProps.description }}</div>-->
 <!--      </div>-->
       <div class="calendar-card__footer">
