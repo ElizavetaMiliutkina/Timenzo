@@ -1,12 +1,22 @@
 export interface EventData {
-    id?:number;
-    date: string;
-    description: string;
-    title: string;
-    price: number;
-    time_end: string;
-    time_start: string;
-    datetime?: string;
-    completed: boolean;
+    id: string
+    title: string
+    start: string
+    end: string
+    extendedProps: {
+        price: number
+        description: string
+        completed: boolean
+    }
 }
+
+export interface CalendarEvent {
+    start: Date;
+    end: Date;
+    startStr: string;
+    endStr: string;
+    timeZone: string
+}
+
+
 

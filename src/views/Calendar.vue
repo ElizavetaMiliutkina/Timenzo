@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref } from 'vue'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -10,10 +10,10 @@ import {
   EventApi,
   EventInput
 } from '@fullcalendar/core';
-import { INITIAL_EVENTS, createEventId } from '../utils/event-utils'
 import ScheduleFormModal from "@/components/calendar/ScheduleFormModal.vue";
 import {postEvent, getEvents} from "@/services/calendar";
-import {EventData} from "@/types/calendar";
+import { EventData, CalendarEvent } from "@/types/calendar";
+import EventCard from "@/components/calendar/EventCard.vue";
 
 const currentEvents = ref<any[]>([]);
 const isModalOpen = ref(false);
@@ -24,25 +24,6 @@ const calendarRef = ref<any>(null)
 const formatDate = (date: Date) =>
     date.toISOString().slice(0, 10);
 
-onMounted(async () => {
-  // const events = await getEvents()
-  // const mapped: EventInput[] = events.map((e: EventData) => ({
-  //   id: e.id?.toString() || createEventId(),
-  //   title: e.title,
-  //   start: `${e.date}T${e.time_start}`,
-  //   end: `${e.date}T${e.time_end}`,
-  //   extendedProps: { price: e.price, description: e.description }
-  // }))
-  //
-  // await nextTick() // дождаться, пока FullCalendar отрендерится
-  //
-  // const calendarApi = calendarRef.value?.getApi?.()
-  // if (calendarApi) {
-  //   mapped.forEach(event => calendarApi.addEvent(event))
-  // } else {
-  //   console.error('calendarApi is not available')
-  // }
-})
 
 const handleWeekendsToggle = () => {
   calendarOptions.value.weekends = !calendarOptions.value.weekends
@@ -59,39 +40,10 @@ const handleModalSubmit = async (formData: EventData) => {
   await postEvent(formData);
   const calendarApi = selectedRange.value!.view.calendar;
   calendarApi.unselect();
+  calendarApi.refetchEvents();
 
-  calendarApi.addEvent({
-    id: createEventId(),
-    title: formData.title,
-    start: selectedRange.value!.startStr,
-    end: selectedRange.value!.endStr,
-    extendedProps: {
-      price: formData.price,
-      description: formData.description
-    },
-    allDay: selectedRange.value!.allDay
-  });
-
-  isModalOpen.value = false
+  isModalOpen.value = false;
 }
-
-// const handleDateSelect = (selectInfo) => {
-//   console.log(selectInfo, 'selectInfo')
-//   const title = prompt('Please enter a new title for your event')
-//   const calendarApi = selectInfo.view.calendar
-//
-//   calendarApi.unselect()
-//
-//   if (title) {
-//     calendarApi.addEvent({
-//       id: createEventId(),
-//       title,
-//       start: selectInfo.startStr,
-//       end: selectInfo.endStr,
-//       allDay: selectInfo.allDay
-//     })
-//   }
-// }
 
 const handleEventClick = (clickInfo: EventClickArg) => {
   if (confirm(`Are you sure you want to delete the event '${clickInfo.event.title}'`)) {
@@ -124,8 +76,8 @@ const calendarOptions = ref<{
   eventClick: (info: EventClickArg) => void;
   eventsSet: (events: EventApi[]) => void;
   events: (
-      info: { start: Date; end: Date; startStr: string; endStr: string; timeZone: string },
-      successCallback: (events: EventInput[]) => void,
+      info: CalendarEvent,
+      successCallback: (events: EventData[]) => void,
       failureCallback: (error: any) => void
   ) => void;
 }>({
@@ -151,18 +103,7 @@ const calendarOptions = ref<{
           formatDate(info.start),
           formatDate(info.end)
       );
-      const mapped: EventInput[] = events.map((e: EventData) => ({
-        id: e.id?.toString() || createEventId(),
-        title: e.title,
-        start: `${e.date}T${e.time_start}`,
-        end: `${e.date}T${e.time_end}`,
-        extendedProps: {
-          price: e.price,
-          description: e.description,
-          completed: e.completed
-        }
-      }))
-      successCallback(mapped)
+      successCallback(events)
     } catch (error) {
       console.error("Error fetching events:", error)
       failureCallback(error)
@@ -174,14 +115,14 @@ const calendarOptions = ref<{
 <template>
   <div class="demo-app">
     <div class="demo-app-sidebar">
-      <div class="demo-app-sidebar-section">
-        <h2>Instructions</h2>
-        <ul>
-          <li>Select dates and you will be prompted to create a new event</li>
-          <li>Drag, drop, and resize events</li>
-          <li>Click an event to delete it</li>
-        </ul>
-      </div>
+<!--      <div class="demo-app-sidebar-section">-->
+<!--        <h2>Instructions</h2>-->
+<!--        <ul>-->
+<!--          <li>Select dates and you will be prompted to create a new event</li>-->
+<!--          <li>Drag, drop, and resize events</li>-->
+<!--          <li>Click an event to delete it</li>-->
+<!--        </ul>-->
+<!--      </div>-->
       <div class="demo-app-sidebar-section">
         <label>
           <input
@@ -192,15 +133,10 @@ const calendarOptions = ref<{
           toggle weekends
         </label>
       </div>
-      <div class="demo-app-sidebar-section">
-        <h2>All Events ({{ currentEvents.length }})</h2>
-        <ul>
-          <li v-for="event in currentEvents" :key="event.id">
-            <b>{{ event.startStr }}</b>
-            <i>{{ event.title }}</i>
-          </li>
-        </ul>
-      </div>
+      <event-card
+          title="All Events"
+          :events="currentEvents"
+      />
     </div>
     <div class="demo-app-main">
       <FullCalendar
@@ -224,10 +160,7 @@ const calendarOptions = ref<{
 </template>
 
 <style scoped>
-h2 {
-  margin: 0;
-  font-size: 16px;
-}
+
 ul {
   margin: 0;
   padding: 0 0 0 1.5em;
@@ -246,20 +179,15 @@ b {
   font-size: 14px;
 }
 .demo-app-sidebar {
+  padding: 2em;
   width: 300px;
   line-height: 1.5;
   background: #eaf9ff;
   border-right: 1px solid #d3e2e8;
 }
-.demo-app-sidebar-section {
-  padding: 2em;
-}
+
 .demo-app-main {
   flex-grow: 1;
   padding: 3em;
-}
-.fc {
-  max-width: 1100px;
-  margin: 0 auto;
 }
 </style>

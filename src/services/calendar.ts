@@ -18,4 +18,13 @@ export const getEvents = async (start: string, end: string): Promise<EventData[]
         return []
     }
 }
+export const completeEvent = async (id: string): Promise<EventData[]> => {
+    try {
+        const response = await axios.patch<EventData[]>(`/events/${id}/complete`)
+        return response.data
+    } catch (error) {
+        console.error('Error fetching events', error)
+        return []
+    }
+}
 

@@ -17,6 +17,7 @@
     "@quasar/extras": "^1.17.0",
     "axios": "^1.9.0",
     "countries-and-timezones": "^3.8.0",
+    "date-fns": "^4.1.0",
     "latest": "^0.2.0",
     "lodash": "^4.17.21",
     "luxon": "^3.6.1",
