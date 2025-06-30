@@ -24,9 +24,9 @@ const completeEv = async (id: string) => {
         <div>{{ event.title }}</div>
         <div>{{ format(parseISO(event.startStr), 'dd.MM') }} - {{ format(parseISO(event.startStr), 'HH:mm') }}</div>
       </div>
-<!--      <div class="calendar-card__body">-->
-<!--        <div>{{ event.extendedProps.description }}</div>-->
-<!--      </div>-->
+      <div class="calendar-card__body">
+        <div>{{ event.extendedProps.description }}</div>
+      </div>
       <div class="calendar-card__footer">
         <q-btn color="primary" @click="completeEv(event.id)"> Complete </q-btn>
       </div>
