@@ -14,12 +14,14 @@ import ScheduleFormModal from "@/components/calendar/ScheduleFormModal.vue";
 import {postEvent, getEvents} from "@/services/calendar";
 import { EventData, CalendarEvent } from "@/types/calendar";
 import EventCard from "@/components/calendar/EventCard.vue";
+import LineGraph from "@/components/graphs/LineGraph.vue";
 
 const currentEvents = ref<any[]>([]);
 const isModalOpen = ref(false);
 const selectedRange = ref<DateSelectArg | null>(null);
 
 const calendarRef = ref<any>(null)
+const tab = ref('schedule')
 
 const formatDate = (date: Date) =>
     date.toISOString().slice(0, 10);
@@ -30,13 +32,11 @@ const handleWeekendsToggle = () => {
 }
 
 const handleDateSelect = (selectInfo: DateSelectArg) => {
-  console.log(selectInfo, 'selectInfo')
   selectedRange.value = selectInfo
   isModalOpen.value = true
 }
 
 const handleModalSubmit = async (formData: EventData) => {
-  console.log(formData, 'formData')
   await postEvent(formData);
   const calendarApi = selectedRange.value!.view.calendar;
   calendarApi.unselect();
@@ -139,17 +139,39 @@ const calendarOptions = ref<{
       />
     </div>
     <div class="demo-app-main">
-      <FullCalendar
-          ref="calendarRef"
-          class="demo-app-calendar"
-          :options="calendarOptions"
+      <q-tabs
+          v-model="tab"
+          dense
+          align="left"
+          class="text-primary"
+          active-color="primary"
+          indicator-color="primary"
+          narrow-indicator
       >
-        <template #eventContent="{ event, timeText }">
-          <b>{{ timeText }}</b>
-          <i>{{ event.title }}</i>
-        </template>
-      </FullCalendar>
+        <q-tab name="schedule" label="Schedule" />
+        <q-tab name="graph" label="Income Graph" />
+      </q-tabs>
+
+      <q-tab-panels v-model="tab" animated>
+        <q-tab-panel name="schedule">
+          <FullCalendar
+              ref="calendarRef"
+              class="demo-app-calendar"
+              :options="calendarOptions"
+          >
+            <template #eventContent="{ event, timeText }">
+              <b>{{ timeText }}</b>
+              <i>{{ event.title }}</i>
+            </template>
+          </FullCalendar>
+        </q-tab-panel>
+
+        <q-tab-panel name="graph">
+          <line-graph />
+        </q-tab-panel>
+      </q-tab-panels>
     </div>
+
   </div>
   <ScheduleFormModal
       v-model="isModalOpen"
