@@ -1,28 +1,38 @@
 <script setup lang="ts">
-import { defineProps } from 'vue'
-import { EventApi } from "@fullcalendar/core";
-import { completeEvent } from "@/services/calendar";
+import { computed } from 'vue'
 import { format, parseISO } from 'date-fns'
+import { useCalendarStore } from '@/store/calendar'
 
-defineProps<{
-  title: String,
-  events: EventApi[],
-}>()
+const calendarStore = useCalendarStore()
+
+const filteredEvents = computed(() => {
+  const now = new Date()
+  console.log(123, calendarStore.events)
+  return calendarStore.events.filter(event => {
+    const end = event.end ?? event.start
+    const completed = event.extendedProps?.completed
+    if (!end) return false
+    return new Date(end) <= now && completed === false
+  })
+})
 
 const completeEv = async (id: string) => {
-   await completeEvent(id)
+  const response = await calendarStore.completeEvent(id)
+  if (response) {
+    await calendarStore.reloadEvents()
+  }
 }
 
 </script>
 
 <template>
   <div>
-    <h2>All Events ({{ events.length }})</h2>
+    <h2>All Events ({{ filteredEvents.length }})</h2>
 
-    <div v-for="event in events" :key="event.id" class="calendar-card">
+    <div v-for="event in filteredEvents" :key="event.id" class="calendar-card">
       <div class="calendar-card__header">
         <div>{{ event.title }}</div>
-        <div>{{ format(parseISO(event.startStr), 'dd.MM') }} - {{ format(parseISO(event.startStr), 'HH:mm') }}</div>
+        <div>{{ format(parseISO(event.start), 'dd.MM') }} - {{ format(parseISO(event.start), 'HH:mm') }}</div>
       </div>
       <div class="calendar-card__body">
         <div>{{ event.extendedProps.description }}</div>
