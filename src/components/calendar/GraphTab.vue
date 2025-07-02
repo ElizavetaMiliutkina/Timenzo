@@ -1,12 +1,21 @@
 <script setup lang="ts">
 import LineGraph from "@/components/graphs/LineGraph.vue";
-import {onMounted, ref} from 'vue'
+import {onMounted, ref, watch} from 'vue'
 import {incomeGraph} from '@/services/calendar'
 
-const period = ref(1)
+const period = ref(3)
+const labels = ref([])
+const data = ref([])
+
+
+const getGraphData = async () => {
+  let response = await incomeGraph(period.value)
+  labels.value = response.labels
+  data.value = response.data
+}
 
 onMounted(async () => {
-  await incomeGraph(period.value)
+  await getGraphData()
 })
 
 const periods = [
@@ -16,12 +25,16 @@ const periods = [
   { label: '1 year', value: 12 }
 ]
 
+watch(period, async () => {
+  await getGraphData()
+})
+
+
 
 </script>
 
 <template>
   <div class="flex justify-end">
-    {{period}}
     <q-select
         rounded
         outlined
@@ -33,7 +46,7 @@ const periods = [
         style="width: 200px"
     />
   </div>
-  <line-graph />
+  <line-graph v-if="data.length" :labels="labels" :data="data" />
 </template>
 
 <style scoped>

@@ -10,15 +10,21 @@ import {
   LinearScale
 } from 'chart.js'
 import { Line } from 'vue-chartjs'
+import {defineProps} from "vue";
 
 ChartJS.register(Title, Tooltip, Legend, LineElement, PointElement, CategoryScale, LinearScale)
 
+const props = defineProps({
+  labels: Array,
+  data: Array
+})
+
 const chartData = {
-  labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'],
+  labels: props.labels,
   datasets: [
     {
       label: 'Income ($)',
-      data: [1200, 1900, 3000, 2500, 3100, 4000],
+      data: props.data,
       borderColor: '#42A5F5',
       backgroundColor: 'rgba(66, 165, 245, 0.2)',
       tension: 0.3,
