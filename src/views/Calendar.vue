@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
-import LineGraph from "@/components/graphs/LineGraph.vue";
 import { useCalendarStore } from '@/store/calendar'
 import ScheduleTab from "@/components/calendar/ScheduleTab.vue";
 import EventCard from "@/components/calendar/EventCard.vue";
+import GraphTab from "@/components/calendar/GraphTab.vue";
 const calendarStore = useCalendarStore()
 
 onMounted(async () => {
@@ -55,7 +55,7 @@ const tab = ref('schedule')
         </q-tab-panel>
 
         <q-tab-panel name="graph">
-          <line-graph />
+          <graph-tab/>
         </q-tab-panel>
       </q-tab-panels>
     </div>

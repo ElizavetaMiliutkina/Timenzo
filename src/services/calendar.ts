@@ -27,4 +27,13 @@ export const completeEvent = async (id: string): Promise<EventData[]> => {
         return []
     }
 }
+export const incomeGraph = async (period: number) => {
+    try {
+        const response = await axios.get(`/income/graph?period=${period}`)
+        return response.data
+    } catch (error) {
+        console.error('Error income graph', error)
+        return error
+    }
+}
 
