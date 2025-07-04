@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue'
 import {
   Chart as ChartJS,
   Title,
@@ -19,7 +20,7 @@ const props = defineProps({
   data: Array
 })
 
-const chartData = {
+const chartData = computed(() => ({
   labels: props.labels,
   datasets: [
     {
@@ -33,7 +34,7 @@ const chartData = {
       pointHoverRadius: 7
     }
   ]
-}
+}))
 
 const chartOptions = {
   responsive: true,

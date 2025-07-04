@@ -1,22 +1,33 @@
 <script setup lang="ts">
 import LineGraph from "@/components/graphs/LineGraph.vue";
 import {onMounted, ref, watch} from 'vue'
-import {incomeGraph} from '@/services/calendar'
+import { useCalendarStore } from '@/store/calendar'
+
+const calendarStore = useCalendarStore()
 
 const period = ref(3)
-const labels = ref([])
-const data = ref([])
+const labels = ref<string[]>([])
+const data = ref<number[]>([])
 
 
 const getGraphData = async () => {
-  let response = await incomeGraph(period.value)
-  labels.value = response.labels
-  data.value = response.data
+  await calendarStore.incomeGraph(period.value)
+  labels.value = calendarStore.graphData ? calendarStore.graphData.labels : []
+  data.value =calendarStore.graphData ? calendarStore.graphData.data : []
 }
 
 onMounted(async () => {
   await getGraphData()
 })
+
+watch(
+    () => calendarStore.graphData,
+    (newData) => {
+      labels.value = newData ? newData.labels : []
+      data.value = newData ? newData.data : []
+    },
+    { deep: true }
+)
 
 const periods = [
   { label: '1 month', value: 1 },
@@ -44,6 +55,9 @@ watch(period, async () => {
         emit-value
         map-options
         style="width: 200px"
+        menu-anchor="bottom left"
+        menu-self="top left"
+        behavior="menu"
     />
   </div>
   <line-graph v-if="data.length" :labels="labels" :data="data" />

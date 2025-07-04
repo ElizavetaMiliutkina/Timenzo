@@ -18,5 +18,11 @@ export interface CalendarEvent {
     timeZone: string
 }
 
+export interface GraphData {
+    labels: string[];
+    data: number[];
+    completed: number[];
+}
+
 
 
