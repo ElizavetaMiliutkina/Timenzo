@@ -6,7 +6,7 @@
         <span class="time">{{ localTimeDisplay }}</span>
       </div>
 
-      <div ref="scrollWrapper" class="scroll-wrapper" @scroll="onScroll">
+      <div ref="scrollWrapper" class="scroll-wrapper custom-scrollbar" @scroll="onScroll">
         <div ref="scrollTrack" class="scroll-track">
           <div
               v-for="(label, index) in timeLabels"
@@ -99,7 +99,9 @@ onMounted(() => {
 });
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@import '@/styles/custom-scrollbar.scss';
+
 .time-picker-card {
   background: #0f1b28;
   color: white;
