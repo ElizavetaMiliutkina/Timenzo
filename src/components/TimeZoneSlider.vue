@@ -2,157 +2,163 @@
   <q-card flat class="time-picker-card">
     <q-card-section>
       <div class="time-display">
-        <q-btn flat label="Local Time" @click="toggleTimeZone" />
-        <span class="time">{{ localTime }}</span>
+        <q-btn flat label="Local Time" />
+        <span class="time">{{ localTimeDisplay }}</span>
       </div>
-      <div class="slider-container">
-        <div class="dial-lines">
-          <span v-for="hour in 48" :key="hour" class="dial-line" />
-        </div>
 
-        <div class="top-labels">
-          <span v-for="(label, index) in hourLabels" :key="'local-' + index" class="label">{{ label }}</span>
-        </div>
-        <q-slider
-            v-model="selectedHour"
-            :min="0"
-            :max="47"
-            :step="1"
-            color="primary"
-            track-color="grey-4"
-            class="hour-slider"
-            @input="updateTimes"
-        />
-
-        <div class="bottom-labels">
-          <span v-for="(label, index) in gmtHourLabels" :key="'gmt-' + index" class="label">{{ label }}</span>
+      <div ref="scrollWrapper" class="scroll-wrapper" @scroll="onScroll">
+        <div ref="scrollTrack" class="scroll-track">
+          <div
+              v-for="(label, index) in timeLabels"
+              :key="index"
+              class="tick"
+              :class="{ active: index === selectedIndex }"
+          >
+            <div class="tick-label">{{ label }}</div>
+            <div class="line" />
+            <div class="tick-label">{{ timeLabelsGmt[index] }}</div>
+          </div>
         </div>
       </div>
+
       <div class="time-display">
-        <q-btn flat label="GMT +2:00" @click="toggleTimeZone" />
-        <span class="time">{{ gmtTime }}</span>
+        <q-btn flat label="GMT +2:00" />
+        <span class="time">{{ gmtTimeDisplay }}</span>
       </div>
     </q-card-section>
   </q-card>
 </template>
 
-<script lang="ts" setup>
-import { ref, computed } from 'vue';
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue';
 import { DateTime } from 'luxon';
 
-    const selectedHour = ref(12); // Default to 8 PM (local time 11:05 PM adjusted)
-    const offset = 2; // GMT +2:00
+const offset = 2;
+const selectedIndex = ref(16);
+const scrollWrapper = ref<HTMLElement | null>(null);
+const scrollTrack = ref<HTMLElement | null>(null);
 
-    const hours = computed(() => Array.from({ length: 24 }, (_, i) => i));
-    const gmtHours = computed(() => {
-      return hours.value.map(h => (h + offset) % 24);
-    });
+const isInitialized = ref(false);
 
-    const localTime = computed(() => {
-      return DateTime.fromObject({ hour: 0, minute: 0 })
-          .plus({ minutes: selectedHour.value * 30 })
-          .toFormat('hh:mm a');
-    });
+const timeLabels = computed(() => {
+  return Array.from({ length: 48 }, (_, i) => {
+    const minutes = i * 30;
+    return DateTime.fromObject({ hour: 0, minute: 0 }).plus({ minutes }).toFormat('hh:mm');
+  });
+});
 
-    const gmtTime = computed(() => {
-      return DateTime.fromObject({ hour: 0, minute: 0 })
-          .plus({ minutes: selectedHour.value * 30 + offset * 60 })
-          .toFormat('hh:mm a');
-    });
+const timeLabelsGmt = computed(() => {
+  return Array.from({ length: 48 }, (_, i) => {
+    const minutes = i * 30 + offset * 60;
+    return DateTime.fromObject({ hour: 0, minute: 0 }).plus({ minutes }).toFormat('hh:mm');
+  });
+});
 
-    const hourLabels = computed(() => {
-      return hours.value.map(h => formatHourAndMinutes(h, 0));
-    });
+const localTimeDisplay = computed(() => {
+  const minutes = selectedIndex.value * 30;
+  return DateTime.fromObject({ hour: 0, minute: 0 }).plus({ minutes }).toFormat('hh:mm a');
+});
 
-    const gmtHourLabels = computed(() => {
-      return hours.value.map(h => {
-        const gmtHour = (h + offset) % 24;
-        return formatHourAndMinutes(gmtHour, 0);
-      });
-    });
+const gmtTimeDisplay = computed(() => {
+  const minutes = selectedIndex.value * 30 + offset * 60;
+  return DateTime.fromObject({ hour: 0, minute: 0 }).plus({ minutes }).toFormat('hh:mm a');
+});
 
-    function formatHourAndMinutes(hour: number, minute = 0): string {
-      return DateTime.fromObject({ hour, minute }).toFormat('hh');
+
+const onScroll = () => {
+  if (!scrollWrapper.value || !scrollTrack.value || !isInitialized.value) return;
+
+  const wrapperRect = scrollWrapper.value.getBoundingClientRect();
+  const children = scrollTrack.value.children;
+
+  let closestIndex = 0;
+  let closestDist = Infinity;
+
+  for (let i = 0; i < children.length; i++) {
+    const rect = children[i].getBoundingClientRect();
+    const dist = Math.abs(rect.left + rect.width / 2 - wrapperRect.left - wrapperRect.width / 2);
+    if (dist < closestDist) {
+      closestDist = dist;
+      closestIndex = i;
     }
-    const updateTimes = () => {
-      // Ensure times update on slider change
-    };
+  }
 
-    const toggleTimeZone = () => {
-      // Add logic to switch between time zones if needed
-    };
+  selectedIndex.value = closestIndex;
+}
+
+onMounted(() => {
+  setTimeout(() => {
+    if (!scrollWrapper.value || !scrollTrack.value) return;
+    const el = scrollTrack.value.children[selectedIndex.value] as HTMLElement;
+    el.scrollIntoView({ inline: 'center', behavior: 'smooth' });
+
+    setTimeout(() => {
+      isInitialized.value = true;
+    }, 300);
+  }, 100);
+});
 </script>
 
-<style>
+<style scoped>
 .time-picker-card {
-  background: rgb(17 69 104 / 50%);
-  border-radius: 10px;
+  background: #0f1b28;
   color: white;
-  padding: 20px;
+  border-radius: 16px;
 }
+
 .time-display {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
 }
+
 .time {
   font-size: 2em;
   font-weight: bold;
 }
-.slider-container {
-  position: relative;
-  margin: 20px 0;
-}
-.hour-slider {
-  margin: 0;
-  padding: 0;
-}
-.top-labels, .bottom-labels {
+
+.scroll-wrapper {
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
   display: flex;
-  justify-content: space-between;
-  width: 100%;
-  margin-left: -5px;
+  align-items: center;
+  height: 180px;
 }
-.top-labels .label, .bottom-labels .label {
+
+.scroll-track {
+  display: flex;
+  gap: 32px;
+  padding: 0 50vw;
+}
+
+.tick {
+  scroll-snap-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0.4;
+  padding: 11px 0;
+  transition: transform 0.2s, opacity 0.2s, padding 0.2s, border 0.3s, box-shadow 0.3s;
+  border-radius: 24px;
+  min-width: 50px;
+}
+
+.tick.active {
+  transform: scale(1.5);
+  opacity: 1;
+  border: 1px solid #00d4ff;
+  box-shadow: 0 0 10px;
+}
+
+.line {
+  height: 32px;
+  width: 2px;
+  background-color: #00d4ff;
+  margin-bottom: 4px;
+}
+
+.tick-label {
   font-size: 0.8em;
-  color: #ccc;
 }
-.top-labels {
-  top: -25px;
-}
-.bottom-labels {
-  bottom: -25px;
-}
-.dial-lines {
-  position: absolute;
-  top: 18px; /* подогнать по высоте слайдера */
-  left: 0;
-  right: 0;
-  height: 30px;
-  display: flex;
-  justify-content: space-between;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.dial-line {
-  width: 1px;
-  height: 30px;
-  background-color: white;
-  opacity: 0.5;
-}
-
-.q-slider__thumb-shape {
-  display: none !important;
-}
-
-.q-slider__thumb {
-  width: 30px!important;
-  height: 80px!important;
-  border: 2px solid #1976d2;
-  border-radius: 13%;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
-}
-
 </style>
