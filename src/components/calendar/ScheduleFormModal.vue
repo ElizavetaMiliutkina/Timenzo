@@ -2,6 +2,7 @@
 import { ref, watch, reactive, defineEmits, defineProps } from 'vue'
 import { EventData } from '@/types/calendar'
 import type { QForm } from 'quasar'
+import TimeZoneSlider from "@/components/TimeZoneSlider.vue";
 
 const props = defineProps({
   modelValue: Boolean,
@@ -136,6 +137,7 @@ async function onSubmit() {
               </q-icon>
             </template>
           </q-input>
+          <time-zone-slider/>
 
           <q-select
               v-model="form.time_start"

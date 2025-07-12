@@ -30,16 +30,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import {ref, computed, onMounted, defineProps} from 'vue';
 import { DateTime } from 'luxon';
+
+const props  = defineProps({
+  time: String,
+})
 
 const scrollWrapper = ref<HTMLElement | null>(null);
 const scrollTrack = ref<HTMLElement | null>(null);
 
 const offset = 2;
-const selectedIndex = ref(16);
+const selectedIndex = ref(13);
 const isInitialized = ref(false);
 
+const getTimeIndex = (time: string): number => {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 2 + Math.floor(minutes / 30);
+}
 
 const timeLabels = computed(() => {
   return Array.from({ length: 48 }, (_, i) => {
@@ -87,8 +95,9 @@ const onScroll = () => {
   selectedIndex.value = closestIndex;
 }
 
-onMounted(() => {
-  setTimeout(() => {
+onMounted( async () => {
+  setTimeout(async () => {
+    selectedIndex.value = await getTimeIndex('17:30')
     if (!scrollWrapper.value || !scrollTrack.value) return;
     const el = scrollTrack.value.children[selectedIndex.value] as HTMLElement;
     el.scrollIntoView({ inline: 'center', behavior: 'smooth' });
