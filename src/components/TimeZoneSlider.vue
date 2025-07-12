@@ -40,6 +40,7 @@ const offset = 2;
 const selectedIndex = ref(16);
 const isInitialized = ref(false);
 
+
 const timeLabels = computed(() => {
   return Array.from({ length: 48 }, (_, i) => {
     const minutes = i * 30;
