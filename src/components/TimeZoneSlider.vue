@@ -33,11 +33,11 @@
 import { ref, computed, onMounted } from 'vue';
 import { DateTime } from 'luxon';
 
-const offset = 2;
-const selectedIndex = ref(16);
 const scrollWrapper = ref<HTMLElement | null>(null);
 const scrollTrack = ref<HTMLElement | null>(null);
 
+const offset = 2;
+const selectedIndex = ref(16);
 const isInitialized = ref(false);
 
 const timeLabels = computed(() => {
