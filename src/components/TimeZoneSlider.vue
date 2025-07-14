@@ -91,7 +91,6 @@ const onScroll = () => {
       closestIndex = i;
     }
   }
-
   selectedIndex.value = closestIndex;
 }
 
