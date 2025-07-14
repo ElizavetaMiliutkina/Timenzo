@@ -97,7 +97,7 @@ const onScroll = () => {
 
 onMounted( async () => {
   setTimeout(async () => {
-    selectedIndex.value = await getTimeIndex('17:30')
+    selectedIndex.value = await getTimeIndex(props.time ?? '17:30')
     if (!scrollWrapper.value || !scrollTrack.value) return;
     const el = scrollTrack.value.children[selectedIndex.value] as HTMLElement;
     el.scrollIntoView({ inline: 'center', behavior: 'smooth' });

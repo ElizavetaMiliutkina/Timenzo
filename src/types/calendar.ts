@@ -10,6 +10,16 @@ export interface EventData {
     }
 }
 
+export interface EventDataCreate {
+    date: string;
+    description: string;
+    title: string;
+    price: number;
+    time_end: string;
+    time_start: string;
+    datetime?: string;
+}
+
 export interface CalendarEvent {
     start: Date;
     end: Date;

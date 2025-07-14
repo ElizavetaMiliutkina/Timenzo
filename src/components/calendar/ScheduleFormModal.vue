@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, reactive, defineEmits, defineProps } from 'vue'
-import { EventData } from '@/types/calendar'
+import { EventDataCreate } from '@/types/calendar'
 import type { QForm } from 'quasar'
 import TimeZoneSlider from "@/components/TimeZoneSlider.vue";
 
@@ -32,7 +32,7 @@ const timeOptions = [
 
 
 
-const form = reactive<EventData>({
+const form = reactive<EventDataCreate>({
   title: '',
   price: 0,
   description: '',
@@ -41,6 +41,8 @@ const form = reactive<EventData>({
   time_end: '',
   datetime: '',
 })
+
+const startTime = ref('12:00')
 
 watch(() => props.modelValue, val => {
   isOpen.value = val
@@ -76,7 +78,7 @@ async function onSubmit() {
   const isValid = await formRef.value.validate()
   if (!isValid) return
 
-  const payload: EventData = {
+  const payload: EventDataCreate = {
     title: form.title,
     price: Number(form.price),
     description: form.description,
@@ -137,7 +139,7 @@ async function onSubmit() {
               </q-icon>
             </template>
           </q-input>
-          <time-zone-slider/>
+          <time-zone-slider :time="startTime"/>
 
           <q-select
               v-model="form.time_start"
