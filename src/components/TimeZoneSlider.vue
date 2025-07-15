@@ -1,18 +1,23 @@
 <template>
-  <q-card flat class="time-picker-card">
+  <q-card flat class="time-picker">
     <q-card-section>
-      <div class="time-display">
+      <div class="time-picker__display">
         <q-btn flat label="Local Time" />
         <span class="time">{{ localTimeDisplay }}</span>
       </div>
 
-      <div ref="scrollWrapper" class="scroll-wrapper custom-scrollbar" @scroll="onScroll">
+      <div
+          ref="scrollWrapper"
+          class="time-picker__scroll-wrapper custom-scrollbar"
+          @scroll="onScroll"
+      >
         <div ref="scrollTrack" class="scroll-track">
           <div
               v-for="(label, index) in timeLabels"
               :key="index"
               class="tick"
               :class="{ active: index === selectedIndex }"
+              @click="scrollToIndex(index)"
           >
             <div class="tick-label">{{ label }}</div>
             <div class="line" />
@@ -21,7 +26,7 @@
         </div>
       </div>
 
-      <div class="time-display">
+      <div class="time-picker__display">
         <q-btn flat label="GMT +2:00" />
         <span class="time">{{ gmtTimeDisplay }}</span>
       </div>
@@ -73,6 +78,13 @@ const gmtTimeDisplay = computed(() => {
   return DateTime.fromObject({ hour: 0, minute: 0 }).plus({ minutes }).toFormat('hh:mm a');
 });
 
+//Select time by click
+const scrollToIndex = (index: number) => {
+  if (!scrollWrapper.value || !scrollTrack.value) return;
+  const el = scrollTrack.value.children[index] as HTMLElement;
+  el.scrollIntoView({ inline: 'center', behavior: 'smooth' });
+  selectedIndex.value = index;
+};
 
 const onScroll = () => {
   if (!scrollWrapper.value || !scrollTrack.value || !isInitialized.value) return;
@@ -96,7 +108,7 @@ const onScroll = () => {
 
 onMounted( async () => {
   setTimeout(async () => {
-    selectedIndex.value = await getTimeIndex(props.time ?? '17:30')
+    selectedIndex.value = await getTimeIndex(props.time ?? DateTime.local().toFormat('HH:mm'))
     if (!scrollWrapper.value || !scrollTrack.value) return;
     const el = scrollTrack.value.children[selectedIndex.value] as HTMLElement;
     el.scrollIntoView({ inline: 'center', behavior: 'smooth' });
@@ -111,65 +123,68 @@ onMounted( async () => {
 <style scoped lang="scss">
 @import '@/styles/custom-scrollbar.scss';
 
-.time-picker-card {
+.time-picker {
   background: #0f1b28;
   color: white;
   border-radius: 16px;
+
+  &__display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .time {
+      font-size: 2em;
+      font-weight: bold;
+    }
+  }
+
+  &__scroll-wrapper {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    align-items: center;
+    height: 180px;
+
+    .scroll-track {
+      display: flex;
+      gap: 32px;
+      padding: 0 50vw;
+
+      .tick {
+        scroll-snap-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        opacity: 0.4;
+        padding: 11px 0;
+        transition: transform 0.2s, opacity 0.2s, padding 0.2s, border 0.3s, box-shadow 0.3s;
+        border-radius: 24px;
+        min-width: 50px;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .tick.active {
+        transform: scale(1.5);
+        opacity: 1;
+        border: 1px solid #00d4ff;
+        box-shadow: 0 0 10px;
+      }
+
+      .line {
+        height: 32px;
+        width: 2px;
+        background-color: #00d4ff;
+        margin-bottom: 4px;
+      }
+
+      .tick-label {
+        font-size: 0.8em;
+      }
+    }
+  }
 }
 
-.time-display {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.time {
-  font-size: 2em;
-  font-weight: bold;
-}
-
-.scroll-wrapper {
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  display: flex;
-  align-items: center;
-  height: 180px;
-}
-
-.scroll-track {
-  display: flex;
-  gap: 32px;
-  padding: 0 50vw;
-}
-
-.tick {
-  scroll-snap-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  opacity: 0.4;
-  padding: 11px 0;
-  transition: transform 0.2s, opacity 0.2s, padding 0.2s, border 0.3s, box-shadow 0.3s;
-  border-radius: 24px;
-  min-width: 50px;
-}
-
-.tick.active {
-  transform: scale(1.5);
-  opacity: 1;
-  border: 1px solid #00d4ff;
-  box-shadow: 0 0 10px;
-}
-
-.line {
-  height: 32px;
-  width: 2px;
-  background-color: #00d4ff;
-  margin-bottom: 4px;
-}
-
-.tick-label {
-  font-size: 0.8em;
-}
 </style>
