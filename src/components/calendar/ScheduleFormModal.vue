@@ -3,6 +3,7 @@ import { ref, watch, reactive, defineEmits, defineProps } from 'vue'
 import { EventDataCreate } from '@/types/calendar'
 import type { QForm } from 'quasar'
 import TimeZoneSlider from "@/components/TimeZoneSlider.vue";
+import TimePeriod from "@/components/TimePeriod.vue";
 
 const props = defineProps({
   modelValue: Boolean,
@@ -36,10 +37,10 @@ const form = reactive<EventDataCreate>({
   title: '',
   price: 0,
   description: '',
-  date: '',
+  date_start: '',
+  date_end: '',
   time_start: '',
   time_end: '',
-  datetime: '',
 })
 
 const startTime = ref('12:00')
@@ -47,16 +48,17 @@ const startTime = ref('12:00')
 watch(() => props.modelValue, val => {
   isOpen.value = val
   if (val && props.start) {
-    form.date = props.start
-    updateDatetime()
+    form.date_start = props.start
+    form.date_end = props.start
+    // updateDatetime()
   }
 })
 
-function updateDatetime() {
-  if (form.date && form.time_start && form.time_end) {
-    form.datetime = `${form.date} ${form.time_start}-${form.time_end}`
-  }
-}
+// function updateDatetime() {
+//   if (form.date_start && form.time_start && form.time_end) {
+//     form.datetime = `${form.date_start} ${form.time_start}-${form.time_end}`
+//   }
+// }
 
 function closeModal() {
   emit('update:modelValue', false)
@@ -67,10 +69,9 @@ function resetForm() {
   form.title = ''
   form.price = 0
   form.description = ''
-  form.date = ''
-  form.time_start = ''
+  form.date_start = ''
   form.time_end = ''
-  form.datetime = ''
+  form.time_end = ''
 }
 
 async function onSubmit() {
@@ -82,10 +83,10 @@ async function onSubmit() {
     title: form.title,
     price: Number(form.price),
     description: form.description,
-    date: form.date,
+    date_start: form.date_start,
+    date_end: form.date_end,
     time_start: form.time_start,
     time_end: form.time_end,
-    datetime: form.datetime,
   }
 
   emit('submit', payload)
@@ -128,18 +129,31 @@ async function onSubmit() {
               :rules="[val => val.length >= 0 || 'Enter description']"
           />
 
-          <q-input v-model="form.date" label="Select Date" readonly>
+          <q-input v-model="form.date_start" label="Select Start Date" readonly>
             <template v-slot:append>
               <q-icon name="event" class="cursor-pointer">
                 <q-popup-proxy cover transition-show="scale" transition-hide="scale">
                   <div class="q-pa-md">
-                    <q-date v-model="form.date" @update:model-value="updateDatetime" />
+                    <q-date v-model="form.date_start" @update:model-value="updateDatetime" />
                   </div>
                 </q-popup-proxy>
               </q-icon>
             </template>
           </q-input>
-          <time-zone-slider :time="startTime"/>
+
+          <q-input v-model="form.date_end" label="Select End Date" readonly>
+            <template v-slot:append>
+              <q-icon name="event" class="cursor-pointer">
+                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                  <div class="q-pa-md">
+                    <q-date v-model="form.date_end" />
+                  </div>
+                </q-popup-proxy>
+              </q-icon>
+            </template>
+          </q-input>
+          {{form.time_start}}
+          <time-zone-slider :time="form.time_start"/>
 
           <q-select
               v-model="form.time_start"
@@ -161,6 +175,11 @@ async function onSubmit() {
               emit-value
               map-options
               @update:model-value="updateDatetime"
+          />
+          <div>including timezone comparison</div>
+          <label style="display: block; margin-top: 20px">Duration</label>
+          <time-period
+              style="width: 290px;"
           />
         </q-form>
       </q-card-section>

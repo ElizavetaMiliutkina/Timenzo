@@ -107,8 +107,12 @@ const onScroll = () => {
 }
 
 onMounted( async () => {
+  console.log(!!props.time)
   setTimeout(async () => {
-    selectedIndex.value = await getTimeIndex(props.time ?? DateTime.local().toFormat('HH:mm'))
+    const currentTime = props.time && props.time.trim() !== ''
+        ? props.time
+        : DateTime.local().toFormat('HH:mm');
+    selectedIndex.value = await getTimeIndex(currentTime)
     if (!scrollWrapper.value || !scrollTrack.value) return;
     const el = scrollTrack.value.children[selectedIndex.value] as HTMLElement;
     el.scrollIntoView({ inline: 'center', behavior: 'smooth' });
@@ -124,8 +128,10 @@ onMounted( async () => {
 @import '@/styles/custom-scrollbar.scss';
 
 .time-picker {
-  background: #0f1b28;
-  color: white;
+  //background: #0f1b28;
+  //color: white;
+  background: #e0e0e061;
+  color: #000000;
   border-radius: 16px;
 
   &__display {
