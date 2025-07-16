@@ -50,15 +50,8 @@ watch(() => props.modelValue, val => {
   if (val && props.start) {
     form.date_start = props.start
     form.date_end = props.start
-    // updateDatetime()
   }
 })
-
-// function updateDatetime() {
-//   if (form.date_start && form.time_start && form.time_end) {
-//     form.datetime = `${form.date_start} ${form.time_start}-${form.time_end}`
-//   }
-// }
 
 function closeModal() {
   emit('update:modelValue', false)
