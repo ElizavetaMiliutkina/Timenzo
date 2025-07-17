@@ -11,6 +11,7 @@ import {
   EventInput
 } from '@fullcalendar/core';
 import ScheduleFormModal from "@/components/calendar/ScheduleFormModal.vue";
+import ShowEventModal from "@/components/calendar/ShowEventModal.vue";
 import {postEvent} from "@/services/calendar";
 import { EventData, CalendarEvent } from "@/types/calendar";
 import { useCalendarStore } from '@/store/calendar'
@@ -19,7 +20,9 @@ import { format } from 'date-fns'
 const calendarStore = useCalendarStore()
 
 const isModalOpen = ref(false);
+const isShowModalOpen = ref(false);
 const selectedRange = ref<DateSelectArg | null>(null);
+const selectedEvent = ref<EventData | null>(null)
 
 const calendarRef = ref<any>(null)
 
@@ -39,9 +42,19 @@ const handleModalSubmit = async (formData: EventData) => {
 }
 
 const handleEventClick = (clickInfo: EventClickArg) => {
-  if (confirm(`Are you sure you want to delete the event '${clickInfo.event.title}'`)) {
-    clickInfo.event.remove()
+  const event = clickInfo.event
+
+  selectedEvent.value = {
+    id: event.id,
+    title: event.title,
+    start: event.startStr,
+    end: event.endStr,
+    extendedProps: {
+      ...event.extendedProps
+    }
   }
+  isShowModalOpen.value = true
+  console.log('Event data:',isShowModalOpen.value)
 }
 
 const handleEvents = () => {
@@ -113,6 +126,10 @@ const calendarOptions = ref<{
       :start="selectedRange?.startStr"
       :end="selectedRange?.endStr"
       @submit="handleModalSubmit"
+  />
+  <ShowEventModal
+      v-model="isShowModalOpen"
+      :event="selectedEvent"
   />
 </template>
 
