@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import {reactive} from "vue";
+import {reactive, watch} from "vue";
+
+const emit = defineEmits(['update:duration'])
 
 interface TimePeriod {
   days: number;
@@ -12,6 +14,11 @@ const form = reactive<TimePeriod>({
   hours: 1,
   minutes: 0,
 })
+
+watch(form, () => {
+  validateForm()
+  emit('update:duration', { ...form })
+}, { deep: true })
 
 const validateForm = () => {
   if (form.days < 0 || isNaN(form.days)) form.days = 0;

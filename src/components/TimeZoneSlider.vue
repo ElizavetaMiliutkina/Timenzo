@@ -35,12 +35,15 @@
 </template>
 
 <script setup lang="ts">
-import {ref, computed, onMounted, defineProps} from 'vue';
+import {ref, computed, onMounted, defineProps, defineEmits, watch} from 'vue';
 import { DateTime } from 'luxon';
+import { debounce } from 'lodash';
 
 const props  = defineProps({
   time: String,
 })
+
+const emit = defineEmits(['selectedTime'])
 
 const scrollWrapper = ref<HTMLElement | null>(null);
 const scrollTrack = ref<HTMLElement | null>(null);
@@ -73,6 +76,14 @@ const localTimeDisplay = computed(() => {
   return DateTime.fromObject({ hour: 0, minute: 0 }).plus({ minutes }).toFormat('hh:mm a');
 });
 
+watch(
+    selectedIndex, debounce((val) => {
+      const minutes = val * 30;
+      const time = DateTime.fromObject({ hour: 0, minute: 0 }).plus({ minutes }).toFormat('HH:mm');
+      console.log(time, 'timetime')
+      emit('selectedTime', time);
+    }, 300)
+)
 const gmtTimeDisplay = computed(() => {
   const minutes = selectedIndex.value * 30 + offset * 60;
   return DateTime.fromObject({ hour: 0, minute: 0 }).plus({ minutes }).toFormat('hh:mm a');

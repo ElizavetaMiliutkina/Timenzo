@@ -4,6 +4,7 @@ import { EventDataCreate } from '@/types/calendar'
 import type { QForm } from 'quasar'
 import TimeZoneSlider from "@/components/TimeZoneSlider.vue";
 import TimePeriod from "@/components/TimePeriod.vue";
+import { DateTime, Duration } from 'luxon'
 
 const props = defineProps({
   modelValue: Boolean,
@@ -14,6 +15,7 @@ const emit = defineEmits(['update:modelValue', 'submit'])
 
 const isOpen = ref(false)
 const formRef = ref<QForm | null>(null)
+const duration = ref({ days: 0, hours: 1, minutes: 0 })
 
 const timeOptions = [
   '08:00', '08:30',
@@ -31,8 +33,6 @@ const timeOptions = [
   '20:00', '20:30'
 ]
 
-
-
 const form = reactive<EventDataCreate>({
   title: '',
   price: 0,
@@ -43,7 +43,14 @@ const form = reactive<EventDataCreate>({
   time_end: '',
 })
 
-const startTime = ref('12:00')
+
+const updateDuration = (val: { days: number; hours: number; minutes: number }) => {
+  duration.value = val
+  if (form.time_start) {
+    calculateTimeEnd()
+  }
+}
+
 
 watch(() => props.modelValue, val => {
   isOpen.value = val
@@ -63,9 +70,24 @@ function resetForm() {
   form.price = 0
   form.description = ''
   form.date_start = ''
-  form.time_end = ''
+  form.time_start = ''
   form.time_end = ''
 }
+
+const selectedTime = (time: string) => {
+    form.time_start = time;
+    calculateTimeEnd()
+}
+
+const calculateTimeEnd = () => {
+    const [hour, minute] = form.time_start.split(':').map(Number)
+    const start = DateTime.fromObject({ hour, minute })
+    const added = Duration.fromObject(duration.value)
+    const end = start.plus(added)
+    form.time_end = end.toFormat('HH:mm')
+}
+
+const updateDatetime = () => {}
 
 async function onSubmit() {
   if (!formRef.value) return
@@ -145,34 +167,41 @@ async function onSubmit() {
               </q-icon>
             </template>
           </q-input>
-          {{form.time_start}}
-          <time-zone-slider :time="form.time_start"/>
+          <time-zone-slider :time="form.time_start" @selected-time="selectedTime"/>
 
-          <q-select
-              v-model="form.time_start"
-              :options="timeOptions"
-              label="Select Time Start"
-              outlined
-              dense
-              emit-value
-              map-options
-              @update:model-value="updateDatetime"
-          />
+          <div class="row justify-between">
+            <q-select
+                class="col-md-6"
+                style="padding-right: 5px"
+                v-model="form.time_start"
+                :options="timeOptions"
+                label="Select Time Start"
+                outlined
+                dense
+                emit-value
+                map-options
+                @update:model-value="updateDatetime"
+            />
 
-          <q-select
-              v-model="form.time_end"
-              :options="timeOptions"
-              label="Select Time End"
-              outlined
-              dense
-              emit-value
-              map-options
-              @update:model-value="updateDatetime"
-          />
+            <q-select
+                class="col-md-6"
+                style="padding-left: 5px"
+                v-model="form.time_end"
+                :options="timeOptions"
+                label="Select Time End"
+                outlined
+                dense
+                emit-value
+                map-options
+                @update:model-value="updateDatetime"
+            />
+          </div>
+
           <div>including timezone comparison</div>
           <label style="display: block; margin-top: 20px">Duration</label>
           <time-period
               style="width: 290px;"
+              @update:duration="updateDuration"
           />
         </q-form>
       </q-card-section>

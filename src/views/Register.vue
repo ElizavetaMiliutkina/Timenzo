@@ -37,7 +37,7 @@
             autocomplete="new-password"
         />
       </div>
-      <q-toggle v-model="" label="I accept the license and terms"></q-toggle>
+<!--      <q-toggle v-model="" label="I accept the license and terms"></q-toggle>-->
       <button type="submit">Зарегистрироваться</button>
       <a href="/login" >Уже есть аккаунт Timenzo? Войти</a>
     </form>
