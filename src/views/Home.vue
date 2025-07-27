@@ -4,6 +4,7 @@ import { getLocations } from "@/services/dictionaries";
 import debounce from 'lodash/debounce'
 import TimeZoneSlider from "@/components/TimeZoneSlider.vue";
 import TimePeriod from "@/components/TimePeriod.vue";
+import Table from "@/components/table/Table.vue";
 
 interface LocationOption {
   value: string;
@@ -64,6 +65,7 @@ function selectLocation(loc: LocationOption) {
 
     <time-zone-slider style="width: 600px; margin-left: 150px"/>
     <time-period style="width: 600px; margin-left: 150px"/>
+    <Table/>
   </div>
 </template>
 

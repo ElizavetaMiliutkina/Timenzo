@@ -13,7 +13,7 @@ import {
 import ScheduleFormModal from "@/components/calendar/ScheduleFormModal.vue";
 import ShowEventModal from "@/components/calendar/ShowEventModal.vue";
 import {postEvent} from "@/services/calendar";
-import { EventData, CalendarEvent } from "@/types/calendar";
+import {EventData, CalendarEvent, ScheduleDataProps} from "@/types/calendar";
 import { useCalendarStore } from '@/store/calendar'
 import { format } from 'date-fns'
 
@@ -23,12 +23,19 @@ const isModalOpen = ref(false);
 const isShowModalOpen = ref(false);
 const selectedRange = ref<DateSelectArg | null>(null);
 const selectedEvent = ref<EventData | null>(null)
+const scheduleData = ref<ScheduleDataProps>({
+  date_start: '',
+  date_end: '',
+  time_start: '',
+  time_end: ''
+})
 
 const calendarRef = ref<any>(null)
 
 
 const handleDateSelect = (selectInfo: DateSelectArg) => {
   selectedRange.value = selectInfo
+  console.log(scheduleData.value, 'scheduleData')
   isModalOpen.value = true
 }
 

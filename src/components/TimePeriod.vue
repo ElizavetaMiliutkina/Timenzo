@@ -36,7 +36,7 @@ const validateForm = () => {
         label="Days"
         type="number"
         :min="0"
-        :max="23"
+        :max="42"
         dense
         outlined
         @update:model-value="validateForm"

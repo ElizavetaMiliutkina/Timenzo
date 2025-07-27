@@ -20,6 +20,12 @@ export interface EventDataCreate {
     time_start: string;
     datetime?: string;
 }
+export interface ScheduleDataProps {
+    date_start: string;
+    date_end: string;
+    time_end: string;
+    time_start: string;
+}
 
 export interface CalendarEvent {
     start: Date;

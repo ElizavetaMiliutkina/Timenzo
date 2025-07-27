@@ -13,6 +13,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:modelValue', 'submit'])
 
+
 const isOpen = ref(false)
 const formRef = ref<QForm | null>(null)
 const duration = ref({ days: 0, hours: 1, minutes: 0 })
@@ -54,9 +55,11 @@ const updateDuration = (val: { days: number; hours: number; minutes: number }) =
 
 watch(() => props.modelValue, val => {
   isOpen.value = val
-  if (val && props.start) {
-    form.date_start = props.start
-    form.date_end = props.start
+
+  console.log(props.start,'------', props.end)
+  if (val && props.start && props.end) {
+    form.date_start = updateDatetime(props.start, 'yyyy-MM-dd', 'yyyy/MM/dd')
+    form.date_end = updateDatetime(props.end, 'yyyy-MM-dd', 'yyyy/MM/dd')
   }
 })
 
@@ -87,7 +90,9 @@ const calculateTimeEnd = () => {
     form.time_end = end.toFormat('HH:mm')
 }
 
-const updateDatetime = () => {}
+const updateDatetime = (value: string, formatFrom: string, formatTo: string) => {
+  return DateTime.fromFormat(value, formatFrom).toFormat(formatTo)
+}
 
 async function onSubmit() {
   if (!formRef.value) return
@@ -98,8 +103,8 @@ async function onSubmit() {
     title: form.title,
     price: Number(form.price),
     description: form.description,
-    date_start: form.date_start,
-    date_end: form.date_end,
+    date_start: updateDatetime(form.date_start, 'yyyy/MM/dd', 'yyyy-MM-dd'),
+    date_end: updateDatetime(form.date_end, 'yyyy/MM/dd', 'yyyy-MM-dd'),
     time_start: form.time_start,
     time_end: form.time_end,
   }
@@ -144,60 +149,65 @@ async function onSubmit() {
               :rules="[val => val.length >= 0 || 'Enter description']"
           />
 
-          <q-input v-model="form.date_start" label="Select Start Date" readonly>
-            <template v-slot:append>
-              <q-icon name="event" class="cursor-pointer">
-                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                  <div class="q-pa-md">
-                    <q-date v-model="form.date_start" @update:model-value="updateDatetime" />
-                  </div>
-                </q-popup-proxy>
-              </q-icon>
-            </template>
-          </q-input>
+          <div class="date-block">
+            <q-input v-model="form.date_start" label="Select Start Date" readonly>
+              <template v-slot:append>
+                <q-icon name="event" class="cursor-pointer">
+                  <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                    <div class="q-pa-md">
+                      <q-date v-model="form.date_start" v-close-popup/>
+                    </div>
+                  </q-popup-proxy>
+                </q-icon>
+              </template>
+            </q-input>
 
-          <q-input v-model="form.date_end" label="Select End Date" readonly>
-            <template v-slot:append>
-              <q-icon name="event" class="cursor-pointer">
-                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                  <div class="q-pa-md">
-                    <q-date v-model="form.date_end" />
-                  </div>
-                </q-popup-proxy>
-              </q-icon>
-            </template>
-          </q-input>
+            <q-input v-model="form.date_end" label="Select End Date" readonly>
+              <template v-slot:append>
+                <q-icon name="event" class="cursor-pointer">
+                  <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                    <div class="q-pa-md">
+                      <q-date v-model="form.date_end" v-close-popup/>
+                    </div>
+                  </q-popup-proxy>
+                </q-icon>
+              </template>
+            </q-input>
+          </div>
           <time-zone-slider :time="form.time_start" @selected-time="selectedTime"/>
-
-          <div class="row justify-between">
-            <q-select
-                class="col-md-6"
-                style="padding-right: 5px"
-                v-model="form.time_start"
-                :options="timeOptions"
-                label="Select Time Start"
-                outlined
-                dense
-                emit-value
-                map-options
-                @update:model-value="updateDatetime"
-            />
-
-            <q-select
-                class="col-md-6"
-                style="padding-left: 5px"
-                v-model="form.time_end"
-                :options="timeOptions"
-                label="Select Time End"
-                outlined
-                dense
-                emit-value
-                map-options
-                @update:model-value="updateDatetime"
-            />
+          <div class="text-center">
+            From {{form.time_start}} To {{form.time_end}}
           </div>
 
-          <div>including timezone comparison</div>
+<!--          <div class="row justify-between">-->
+<!--            <q-select-->
+<!--                class="col-md-6"-->
+<!--                style="padding-right: 5px"-->
+<!--                v-model="form.time_start"-->
+<!--                :options="timeOptions"-->
+<!--                label="Select Time Start"-->
+<!--                outlined-->
+<!--                dense-->
+<!--                emit-value-->
+<!--                map-options-->
+<!--                @update:model-value="updateDatetime"-->
+<!--            />-->
+
+<!--            <q-select-->
+<!--                class="col-md-6"-->
+<!--                style="padding-left: 5px"-->
+<!--                v-model="form.time_end"-->
+<!--                :options="timeOptions"-->
+<!--                label="Select Time End"-->
+<!--                outlined-->
+<!--                dense-->
+<!--                emit-value-->
+<!--                map-options-->
+<!--                @update:model-value="updateDatetime"-->
+<!--            />-->
+<!--          </div>-->
+
+<!--          <div>Without timezone comparison</div>-->
           <label style="display: block; margin-top: 20px">Duration</label>
           <time-period
               style="width: 290px;"
@@ -213,3 +223,10 @@ async function onSubmit() {
     </q-card>
   </q-dialog>
 </template>
+
+<style lang="scss" scoped>
+.date-block {
+  display: flex;
+  justify-content: space-between;
+}
+</style>

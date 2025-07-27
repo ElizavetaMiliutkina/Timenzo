@@ -41,6 +41,10 @@ import { debounce } from 'lodash';
 
 const props  = defineProps({
   time: String,
+  slot: {
+    type: Number,
+    default: 0.5,
+  },
 })
 
 const emit = defineEmits(['selectedTime'])
@@ -54,38 +58,43 @@ const isInitialized = ref(false);
 
 const getTimeIndex = (time: string): number => {
   const [hours, minutes] = time.split(':').map(Number);
-  return hours * 2 + Math.floor(minutes / 30);
+  const totalMinutes = hours * 60 + minutes;
+  const slotMinutes = props.slot * 60;
+  return Math.round(totalMinutes / slotMinutes);
 }
 
 const timeLabels = computed(() => {
-  return Array.from({ length: 48 }, (_, i) => {
-    const minutes = i * 30;
+  const slotMinutes = props.slot * 60;
+  const totalSlots = Math.floor(24 * 60 / slotMinutes); // Total slots in a day
+  return Array.from({ length: totalSlots }, (_, i) => {
+    const minutes = i * slotMinutes;
     return DateTime.fromObject({ hour: 0, minute: 0 }).plus({ minutes }).toFormat('hh:mm');
   });
 });
 
 const timeLabelsGmt = computed(() => {
-  return Array.from({ length: 48 }, (_, i) => {
-    const minutes = i * 30 + offset * 60;
+  const slotMinutes = props.slot * 60;
+  const totalSlots = Math.floor(24 * 60 / slotMinutes);
+  return Array.from({ length: totalSlots }, (_, i) => {
+    const minutes = i * slotMinutes + offset * 60;
     return DateTime.fromObject({ hour: 0, minute: 0 }).plus({ minutes }).toFormat('hh:mm');
   });
 });
 
 const localTimeDisplay = computed(() => {
-  const minutes = selectedIndex.value * 30;
+  const minutes = selectedIndex.value * props.slot * 60;
   return DateTime.fromObject({ hour: 0, minute: 0 }).plus({ minutes }).toFormat('hh:mm a');
 });
 
 watch(
     selectedIndex, debounce((val) => {
-      const minutes = val * 30;
+      const minutes = val * props.slot * 60;
       const time = DateTime.fromObject({ hour: 0, minute: 0 }).plus({ minutes }).toFormat('HH:mm');
-      console.log(time, 'timetime')
       emit('selectedTime', time);
     }, 300)
 )
 const gmtTimeDisplay = computed(() => {
-  const minutes = selectedIndex.value * 30 + offset * 60;
+  const minutes = selectedIndex.value * props.slot * 60 + offset * 60;
   return DateTime.fromObject({ hour: 0, minute: 0 }).plus({ minutes }).toFormat('hh:mm a');
 });
 
