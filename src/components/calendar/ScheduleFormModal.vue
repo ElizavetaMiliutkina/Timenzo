@@ -1,16 +1,19 @@
 <script setup lang="ts">
 import { ref, watch, reactive, defineEmits, defineProps } from 'vue'
-import { EventDataCreate } from '@/types/calendar'
+import {EventData, EventDataCreate} from '@/types/calendar'
 import type { QForm } from 'quasar'
 import TimeZoneSlider from "@/components/TimeZoneSlider.vue";
 import TimePeriod from "@/components/TimePeriod.vue";
 import { DateTime, Duration } from 'luxon'
 
-const props = defineProps({
-  modelValue: Boolean,
-  start: String,
-  end: String
-})
+//типизировать props
+const props = defineProps<{
+  modelValue: boolean;
+  date_start: string;
+  date_end: string;
+  time_start: string | null;
+  time_end: string | null;
+}>()
 const emit = defineEmits(['update:modelValue', 'submit'])
 
 
@@ -56,10 +59,11 @@ const updateDuration = (val: { days: number; hours: number; minutes: number }) =
 watch(() => props.modelValue, val => {
   isOpen.value = val
 
-  console.log(props.start,'------', props.end)
-  if (val && props.start && props.end) {
-    form.date_start = updateDatetime(props.start, 'yyyy-MM-dd', 'yyyy/MM/dd')
-    form.date_end = updateDatetime(props.end, 'yyyy-MM-dd', 'yyyy/MM/dd')
+  console.log(props.date_start,'------', props.date_end)
+  if (val && props.date_start && props.date_end && props.time_start && props.time_end) {
+    form.date_start = updateDatetime(props.date_start, 'yyyy-MM-dd', 'yyyy/MM/dd')
+    form.time_start = props.time_start
+    form.time_end = props.time_end
   }
 })
 

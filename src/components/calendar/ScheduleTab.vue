@@ -15,7 +15,7 @@ import ShowEventModal from "@/components/calendar/ShowEventModal.vue";
 import {postEvent} from "@/services/calendar";
 import {EventData, CalendarEvent, ScheduleDataProps} from "@/types/calendar";
 import { useCalendarStore } from '@/store/calendar'
-import { format } from 'date-fns'
+import { parseISO, format } from 'date-fns';
 
 const calendarStore = useCalendarStore()
 
@@ -35,6 +35,17 @@ const calendarRef = ref<any>(null)
 
 const handleDateSelect = (selectInfo: DateSelectArg) => {
   selectedRange.value = selectInfo
+
+  const start = parseISO(selectInfo.startStr);
+  const end = parseISO(selectInfo.endStr);
+
+  scheduleData.value = {
+    date_start: format(start, 'yyyy-MM-dd'),
+    date_end: format(end, 'yyyy-MM-dd'),
+    time_start: selectInfo.startStr.includes('T') ? format(start, 'HH:mm') : '',
+    time_end: selectInfo.endStr.includes('T') ? format(end, 'HH:mm') : '',
+  };
+  console.log(selectInfo, 'selectInfo')
   console.log(scheduleData.value, 'scheduleData')
   isModalOpen.value = true
 }
@@ -130,8 +141,7 @@ const calendarOptions = ref<{
   </FullCalendar>
   <ScheduleFormModal
       v-model="isModalOpen"
-      :start="selectedRange?.startStr"
-      :end="selectedRange?.endStr"
+      v-bind="scheduleData"
       @submit="handleModalSubmit"
   />
   <ShowEventModal
