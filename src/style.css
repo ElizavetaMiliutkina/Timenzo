@@ -26,6 +26,11 @@ body,
   }
 }
 
+.error-message {
+  color: #c10015;
+  font-size: 11px;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

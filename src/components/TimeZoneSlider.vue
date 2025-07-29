@@ -45,6 +45,10 @@ const props  = defineProps({
     type: Number,
     default: 0.5,
   },
+  defaultTime: {
+    type: String,
+    default: '00:00',
+  },
 })
 
 const emit = defineEmits(['selectedTime'])
@@ -131,7 +135,7 @@ onMounted( async () => {
   setTimeout(async () => {
     const currentTime = props.time && props.time.trim() !== ''
         ? props.time
-        : DateTime.local().toFormat('HH:mm');
+        : props.defaultTime;
     selectedIndex.value = await getTimeIndex(currentTime)
     if (!scrollWrapper.value || !scrollTrack.value) return;
     const el = scrollTrack.value.children[selectedIndex.value] as HTMLElement;

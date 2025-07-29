@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import {reactive, watch} from "vue";
+import {defineProps, ref, watch, computed} from "vue";
 
-const emit = defineEmits(['update:duration'])
+const emit = defineEmits(['update:duration','update:valid'])
 
 interface TimePeriod {
   days: number;
@@ -9,64 +9,83 @@ interface TimePeriod {
   minutes: number;
 }
 
-const form = reactive<TimePeriod>({
+const props = defineProps<{
+  modelValue: TimePeriod
+}>()
+
+const form = ref<TimePeriod>({
   days: 0,
   hours: 1,
   minutes: 0,
 })
 
+const isValid = computed(() => {
+  return form.value.days > 0 || form.value.hours > 0 || form.value.minutes > 0;
+});
+
+form.value = props.modelValue
+
 watch(form, () => {
   validateForm()
-  emit('update:duration', { ...form })
+  emit('update:duration', { ...form.value })
+  console.log(isValid.value, 'isValid.value')
+  emit('update:valid', isValid.value);
 }, { deep: true })
 
 const validateForm = () => {
-  if (form.days < 0 || isNaN(form.days)) form.days = 0;
-  if (form.hours < 0 || isNaN(form.hours)) form.hours = 0;
-  if (form.hours > 23) form.hours = 23;
-  if (form.minutes < 0 || isNaN(form.minutes)) form.minutes = 0;
-  if (form.minutes > 59) form.minutes = 59;
+  if (form.value.days < 0 || isNaN(form.value.days)) form.value.days = 0;
+  if (form.value.hours < 0 || isNaN(form.value.hours)) form.value.hours = 0;
+  if (form.value.hours > 23) form.value.hours = 23;
+  if (form.value.minutes < 0 || isNaN(form.value.minutes)) form.value.minutes = 0;
+  if (form.value.minutes > 59) form.value.minutes = 59;
 };
 </script>
 
 <template>
-  <div class="time-period">
-    <q-input
-        v-model.number="form.days"
-        label="Days"
-        type="number"
-        :min="0"
-        :max="42"
-        dense
-        outlined
-        @update:model-value="validateForm"
-   />
-    <q-input
-        v-model.number="form.hours"
-        label="Hours"
-        type="number"
-        :min="0"
-        :max="23"
-        dense
-        outlined
-        @update:model-value="validateForm"
-    />
-    <q-input
-        v-model.number="form.minutes"
-        label="Minutes"
-        type="number"
-        :min="0"
-        :max="59"
-        dense
-        outlined
-        @update:model-value="validateForm"
-    />
+  <div>
+    <div class="time-period">
+      <q-input
+          v-model.number="form.days"
+          label="Days"
+          type="number"
+          :min="0"
+          :max="42"
+          dense
+          outlined
+          :error="!isValid"
+          @update:model-value="validateForm"
+      />
+      <q-input
+          v-model.number="form.hours"
+          label="Hours"
+          type="number"
+          :min="0"
+          :max="23"
+          dense
+          outlined
+          :error="!isValid"
+          @update:model-value="validateForm"
+      />
+      <q-input
+          v-model.number="form.minutes"
+          label="Minutes"
+          type="number"
+          :min="0"
+          :max="59"
+          dense
+          outlined
+          :error="!isValid"
+          @update:model-value="validateForm"
+      />
+    </div>
+    <div class="error-message" v-if="!isValid">At least one field (Days, Hours, Minutes) must be greater than 0</div>
   </div>
 </template>
 
 <style scoped>
 .time-period{
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 20px;
 }
 </style>

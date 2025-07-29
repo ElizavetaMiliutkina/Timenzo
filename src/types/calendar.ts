@@ -25,6 +25,7 @@ export interface ScheduleDataProps {
     date_end: string;
     time_end: string;
     time_start: string;
+    duration: number;
 }
 
 export interface CalendarEvent {

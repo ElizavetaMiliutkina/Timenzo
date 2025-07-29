@@ -1,41 +1,24 @@
 <script setup lang="ts">
 import { ref, watch, reactive, defineEmits, defineProps } from 'vue'
-import {EventData, EventDataCreate} from '@/types/calendar'
+import { EventDataCreate } from '@/types/calendar'
 import type { QForm } from 'quasar'
 import TimeZoneSlider from "@/components/TimeZoneSlider.vue";
 import TimePeriod from "@/components/TimePeriod.vue";
 import { DateTime, Duration } from 'luxon'
 
-//типизировать props
 const props = defineProps<{
   modelValue: boolean;
   date_start: string;
   date_end: string;
   time_start: string | null;
   time_end: string | null;
+  duration: number
 }>()
 const emit = defineEmits(['update:modelValue', 'submit'])
 
-
-const isOpen = ref(false)
 const formRef = ref<QForm | null>(null)
 const duration = ref({ days: 0, hours: 1, minutes: 0 })
 
-const timeOptions = [
-  '08:00', '08:30',
-  '09:00', '09:30',
-  '10:00', '10:30',
-  '11:00', '11:30',
-  '12:00', '12:30',
-  '13:00', '13:30',
-  '14:00', '14:30',
-  '15:00', '15:30',
-  '16:00', '16:30',
-  '17:00', '17:30',
-  '18:00', '18:30',
-  '19:00', '19:30',
-  '20:00', '20:30'
-]
 
 const form = reactive<EventDataCreate>({
   title: '',
@@ -49,21 +32,37 @@ const form = reactive<EventDataCreate>({
 
 
 const updateDuration = (val: { days: number; hours: number; minutes: number }) => {
+  console.log(val, 'val')
   duration.value = val
   if (form.time_start) {
+    console.log('2')
     calculateTimeEnd()
   }
 }
 
+const updateDurationFromHours = (hours: number) => {
+  const dur = Duration.fromObject({ hours }).shiftTo('days', 'hours', 'minutes').toObject();
+  duration.value = {
+    days: dur.days || 0,
+    hours: dur.hours || 0,
+    minutes: dur.minutes || 0,
+  };
+};
+
+watch(() => form.date_start, () => calculateTimeEnd())
 
 watch(() => props.modelValue, val => {
-  isOpen.value = val
+  updateDurationFromHours(props.duration)
 
-  console.log(props.date_start,'------', props.date_end)
-  if (val && props.date_start && props.date_end && props.time_start && props.time_end) {
+  console.log(props.date_start, '-----', props.date_end)
+  console.log(props.time_start, '-----', props.time_end)
+
+  if (val && props.date_start && props.date_end) {
     form.date_start = updateDatetime(props.date_start, 'yyyy-MM-dd', 'yyyy/MM/dd')
-    form.time_start = props.time_start
-    form.time_end = props.time_end
+    form.date_end = updateDatetime(props.date_end, 'yyyy-MM-dd', 'yyyy/MM/dd')
+    form.time_start = props.time_start ?? ''
+    form.time_end = props.time_end ?? ''
+    console.log(form.date_end,'435')
   }
 })
 
@@ -85,12 +84,14 @@ const selectedTime = (time: string) => {
     form.time_start = time;
     calculateTimeEnd()
 }
+const isTimePeriodValid = ref(true);
 
 const calculateTimeEnd = () => {
-    const [hour, minute] = form.time_start.split(':').map(Number)
-    const start = DateTime.fromObject({ hour, minute })
+    const start = DateTime.fromFormat(`${form.date_start} ${form.time_start}`, 'yyyy/MM/dd HH:mm');
     const added = Duration.fromObject(duration.value)
     const end = start.plus(added)
+
+    form.date_end = end.toFormat('yyyy/MM/dd')
     form.time_end = end.toFormat('HH:mm')
 }
 
@@ -101,7 +102,8 @@ const updateDatetime = (value: string, formatFrom: string, formatTo: string) => 
 async function onSubmit() {
   if (!formRef.value) return
   const isValid = await formRef.value.validate()
-  if (!isValid) return
+  console.log(isTimePeriodValid.value, '!isTimePeriodValid')
+  if (!isValid || !isTimePeriodValid.value) return
 
   const payload: EventDataCreate = {
     title: form.title,
@@ -109,17 +111,18 @@ async function onSubmit() {
     description: form.description,
     date_start: updateDatetime(form.date_start, 'yyyy/MM/dd', 'yyyy-MM-dd'),
     date_end: updateDatetime(form.date_end, 'yyyy/MM/dd', 'yyyy-MM-dd'),
-    time_start: form.time_start,
-    time_end: form.time_end,
+    time_start: form.time_start ?? '00:00',
+    time_end: form.time_end ?? '00:00',
   }
 
+  console.log(123)
   emit('submit', payload)
   closeModal()
 }
 </script>
 
 <template>
-  <q-dialog v-model="isOpen" persistent>
+  <q-dialog v-model="props.modelValue" persistent>
     <q-card style="min-width: 400px">
       <q-card-section>
         <div class="text-h6">New Schedule</div>
@@ -182,39 +185,11 @@ async function onSubmit() {
           <div class="text-center">
             From {{form.time_start}} To {{form.time_end}}
           </div>
-
-<!--          <div class="row justify-between">-->
-<!--            <q-select-->
-<!--                class="col-md-6"-->
-<!--                style="padding-right: 5px"-->
-<!--                v-model="form.time_start"-->
-<!--                :options="timeOptions"-->
-<!--                label="Select Time Start"-->
-<!--                outlined-->
-<!--                dense-->
-<!--                emit-value-->
-<!--                map-options-->
-<!--                @update:model-value="updateDatetime"-->
-<!--            />-->
-
-<!--            <q-select-->
-<!--                class="col-md-6"-->
-<!--                style="padding-left: 5px"-->
-<!--                v-model="form.time_end"-->
-<!--                :options="timeOptions"-->
-<!--                label="Select Time End"-->
-<!--                outlined-->
-<!--                dense-->
-<!--                emit-value-->
-<!--                map-options-->
-<!--                @update:model-value="updateDatetime"-->
-<!--            />-->
-<!--          </div>-->
-
-<!--          <div>Without timezone comparison</div>-->
           <label style="display: block; margin-top: 20px">Duration</label>
           <time-period
+              v-model="duration"
               style="width: 290px;"
+              @update:valid="isTimePeriodValid = $event"
               @update:duration="updateDuration"
           />
         </q-form>

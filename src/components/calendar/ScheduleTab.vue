@@ -15,40 +15,47 @@ import ShowEventModal from "@/components/calendar/ShowEventModal.vue";
 import {postEvent} from "@/services/calendar";
 import {EventData, CalendarEvent, ScheduleDataProps} from "@/types/calendar";
 import { useCalendarStore } from '@/store/calendar'
-import { parseISO, format } from 'date-fns';
+import { DateTime } from 'luxon';
 
 const calendarStore = useCalendarStore()
 
 const isModalOpen = ref(false);
-const isShowModalOpen = ref(false);
+const isEventCardModalOpen = ref(false);
 const selectedRange = ref<DateSelectArg | null>(null);
 const selectedEvent = ref<EventData | null>(null)
 const scheduleData = ref<ScheduleDataProps>({
   date_start: '',
   date_end: '',
   time_start: '',
-  time_end: ''
+  time_end: '',
+  duration: 0
 })
-
 const calendarRef = ref<any>(null)
 
+const calculateHoursDifference = (startStr: string, endStr: string): number  => {
+  const start = DateTime.fromISO(startStr);
+  const end = DateTime.fromISO(endStr);
+  const diff = end.diff(start, 'hours').toObject();
+  return diff.hours || 0;
+}
 
 const handleDateSelect = (selectInfo: DateSelectArg) => {
-  selectedRange.value = selectInfo
+  selectedRange.value = selectInfo;
 
-  const start = parseISO(selectInfo.startStr);
-  const end = parseISO(selectInfo.endStr);
+  const start = DateTime.fromISO(selectInfo.startStr);
+  const end = DateTime.fromISO(selectInfo.endStr);
 
   scheduleData.value = {
-    date_start: format(start, 'yyyy-MM-dd'),
-    date_end: format(end, 'yyyy-MM-dd'),
-    time_start: selectInfo.startStr.includes('T') ? format(start, 'HH:mm') : '',
-    time_end: selectInfo.endStr.includes('T') ? format(end, 'HH:mm') : '',
+    date_start: start.toFormat('yyyy-MM-dd'),
+    date_end: end.toFormat('yyyy-MM-dd'),
+    time_start: selectInfo.startStr.includes('T') ? start.toFormat('HH:mm') : '',
+    time_end: selectInfo.endStr.includes('T') ? end.toFormat('HH:mm') : '',
+    duration: calculateHoursDifference(selectInfo.startStr, selectInfo.endStr)
   };
-  console.log(selectInfo, 'selectInfo')
-  console.log(scheduleData.value, 'scheduleData')
-  isModalOpen.value = true
-}
+
+  setTimeout(() => isModalOpen.value = true, 500)
+
+};
 
 const handleModalSubmit = async (formData: EventData) => {
   await postEvent(formData);
@@ -71,8 +78,8 @@ const handleEventClick = (clickInfo: EventClickArg) => {
       ...event.extendedProps
     }
   }
-  isShowModalOpen.value = true
-  console.log('Event data:',isShowModalOpen.value)
+  isEventCardModalOpen.value = true
+  console.log('Event data:',isEventCardModalOpen.value)
 }
 
 const handleEvents = () => {
@@ -116,8 +123,8 @@ const calendarOptions = ref<{
   eventsSet: handleEvents,
   events: async (info, successCallback, failureCallback) => {
     try {
-      const start = format(info.start, 'yyyy-MM-dd')
-      const end = format(info.end, 'yyyy-MM-dd')
+      const start = DateTime.fromJSDate(info.start).toFormat('yyyy-MM-dd');
+      const end = DateTime.fromJSDate(info.end).toFormat('yyyy-MM-dd');
       await calendarStore.getEvents(start, end)
       successCallback(calendarStore.events)
     } catch (error) {
@@ -145,7 +152,7 @@ const calendarOptions = ref<{
       @submit="handleModalSubmit"
   />
   <ShowEventModal
-      v-model="isShowModalOpen"
+      v-model="isEventCardModalOpen"
       :event="selectedEvent"
   />
 </template>
