@@ -13,6 +13,7 @@ const props = defineProps<{
   time_start: string | null;
   time_end: string | null;
   duration: number
+  form: EventDataCreate
 }>()
 const emit = defineEmits(['update:modelValue', 'submit'])
 
@@ -96,6 +97,19 @@ const calculateTimeEnd = () => {
 const updateDatetime = (value: string, formatFrom: string, formatTo: string) => {
   return DateTime.fromFormat(value, formatFrom).toFormat(formatTo)
 }
+const formatedDateTime = (time:string, date:string, type: 'date' | 'weekday') => {
+  if (!time || !date) return '';
+
+  const dateTime = DateTime.fromFormat(`${date} ${time}`, 'yyyy/MM/dd HH:mm');
+
+  if(type === 'weekday'){
+    return dateTime.toFormat('cccc')
+  } else {
+    return dateTime.isValid
+        ? dateTime.toFormat('MMM dd hh:mm a')
+        : 'Invalid DateTime';
+  }
+}
 
 async function onSubmit() {
   if (!formRef.value) return
@@ -113,7 +127,6 @@ async function onSubmit() {
     time_end: form.time_end ?? '00:00',
   }
 
-  console.log(123)
   emit('submit', payload)
   closeModal()
 }
@@ -180,8 +193,17 @@ async function onSubmit() {
             </q-input>
           </div>
           <time-zone-slider :time="form.time_start" @selected-time="selectedTime"/>
-          <div class="text-center">
-            From {{form.time_start}} To {{form.time_end}}
+          <div class="time-info-block">
+            <div class="text-center flex justify-center text-weight-bolder mdi-size-l" style="gap: 70px">
+              <span>{{formatedDateTime(form.time_start, form.date_start, 'weekday')}}</span>
+              <span>{{formatedDateTime(form.time_end, form.date_end, 'weekday')}}</span>
+            </div>
+            <div class="text-center">
+              From <span class="text-weight-bolder">
+              {{formatedDateTime(form.time_start, form.date_start, 'date')}}
+            </span>
+              To <span class="text-weight-bolder">{{formatedDateTime(form.time_end, form.date_end, 'date')}}</span>
+            </div>
           </div>
           <label style="display: block; margin-top: 20px">Duration</label>
           <time-period
