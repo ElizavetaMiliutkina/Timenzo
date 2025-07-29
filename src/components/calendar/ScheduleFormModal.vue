@@ -32,10 +32,8 @@ const form = reactive<EventDataCreate>({
 
 
 const updateDuration = (val: { days: number; hours: number; minutes: number }) => {
-  console.log(val, 'val')
   duration.value = val
   if (form.time_start) {
-    console.log('2')
     calculateTimeEnd()
   }
 }
