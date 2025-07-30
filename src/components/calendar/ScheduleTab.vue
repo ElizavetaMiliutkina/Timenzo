@@ -12,8 +12,8 @@ import {
 } from '@fullcalendar/core';
 import ScheduleFormModal from "@/components/calendar/ScheduleFormModal.vue";
 import ShowEventModal from "@/components/calendar/ShowEventModal.vue";
-import {postEvent} from "@/services/calendar";
-import {EventData, CalendarEvent, ScheduleDataProps} from "@/types/calendar";
+import { postEvent, patchEvent } from "@/services/calendar";
+import {EventData, CalendarEvent, ScheduleDataProps, EventDataCreate} from "@/types/calendar";
 import { useCalendarStore } from '@/store/calendar'
 import { DateTime } from 'luxon';
 
@@ -31,6 +31,8 @@ const scheduleData = ref<ScheduleDataProps>({
   duration: 0
 })
 const calendarRef = ref<any>(null)
+const editForm = ref<EventDataCreate | null>(null)
+const editId = ref<number | null>(null)
 
 const calculateHoursDifference = (startStr: string, endStr: string): number  => {
   const start = DateTime.fromISO(startStr);
@@ -66,6 +68,13 @@ const handleModalSubmit = async (formData: EventData) => {
   isModalOpen.value = false;
 }
 
+const editEvent = async (formData: EventData) => {
+  await patchEvent(formData, editId.value); // Исправить типизацию
+  editForm.value = null
+  editId.value = null
+  isModalOpen.value = false;
+}
+
 const handleEventClick = (clickInfo: EventClickArg) => {
   const event = clickInfo.event
 
@@ -84,6 +93,23 @@ const handleEventClick = (clickInfo: EventClickArg) => {
 
 const handleEvents = () => {
 
+}
+const editEventForm = (data: EventDataCreate, id: number) => {
+  // isEventCardModalOpen.value = false
+  editForm.value = data;
+  editId.value = id
+
+  const start = DateTime.fromFormat(
+      `${data.date_start} ${data.time_start}`,
+      'yyyy-MM-dd HH:mm'
+  );
+  const end = DateTime.fromFormat(
+      `${data.date_end} ${data.time_end}`,
+      'yyyy-MM-dd HH:mm'
+  );
+  scheduleData.value.duration = end.diff(start, 'hours').hours;
+
+  isModalOpen.value = true;
 }
 
 const calendarOptions = ref<{
@@ -149,11 +175,14 @@ const calendarOptions = ref<{
   <ScheduleFormModal
       v-model="isModalOpen"
       v-bind="scheduleData"
+      :form="editForm"
       @submit="handleModalSubmit"
+      @edit="editEvent"
   />
   <ShowEventModal
       v-model="isEventCardModalOpen"
       :event="selectedEvent"
+      @edit="editEventForm"
   />
 </template>
 

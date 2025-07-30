@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, reactive, defineEmits, defineProps } from 'vue'
+import { ref, watch, defineEmits, defineProps } from 'vue'
 import { EventDataCreate } from '@/types/calendar'
 import type { QForm } from 'quasar'
 import TimeZoneSlider from "@/components/TimeZoneSlider.vue";
@@ -13,15 +13,15 @@ const props = defineProps<{
   time_start: string | null;
   time_end: string | null;
   duration: number
-  form: EventDataCreate
+  form: EventDataCreate | null
 }>()
-const emit = defineEmits(['update:modelValue', 'submit'])
+const emit = defineEmits(['update:modelValue', 'submit', 'edit'])
 
 const formRef = ref<QForm | null>(null)
 const duration = ref({ days: 0, hours: 1, minutes: 0 })
 
 
-const form = reactive<EventDataCreate>({
+const form = ref<EventDataCreate>({
   title: '',
   price: 0,
   description: '',
@@ -34,7 +34,7 @@ const form = reactive<EventDataCreate>({
 
 const updateDuration = (val: { days: number; hours: number; minutes: number }) => {
   duration.value = val
-  if (form.time_start) {
+  if (form.value.time_start) {
     calculateTimeEnd()
   }
 }
@@ -48,7 +48,7 @@ const updateDurationFromHours = (hours: number) => {
   };
 };
 
-watch(() => form.date_start, () => calculateTimeEnd())
+watch(() => form.value.date_start, () => calculateTimeEnd())
 
 watch(() => props.modelValue, val => {
   updateDurationFromHours(props.duration)
@@ -56,12 +56,17 @@ watch(() => props.modelValue, val => {
   console.log(props.date_start, '-----', props.date_end)
   console.log(props.time_start, '-----', props.time_end)
 
+  if(props.form) {
+    form.value = props.form
+    form.value.date_start = updateDatetime(form.value.date_start, 'yyyy-MM-dd', 'yyyy/MM/dd')
+    form.value.date_end = updateDatetime(form.value.date_end, 'yyyy-MM-dd', 'yyyy/MM/dd')
+  }
+
   if (val && props.date_start && props.date_end) {
-    form.date_start = updateDatetime(props.date_start, 'yyyy-MM-dd', 'yyyy/MM/dd')
-    form.date_end = updateDatetime(props.date_end, 'yyyy-MM-dd', 'yyyy/MM/dd')
-    form.time_start = props.time_start ?? ''
-    form.time_end = props.time_end ?? ''
-    console.log(form.date_end,'435')
+    form.value.date_start = updateDatetime(props.date_start, 'yyyy-MM-dd', 'yyyy/MM/dd')
+    form.value.date_end = updateDatetime(props.date_end, 'yyyy-MM-dd', 'yyyy/MM/dd')
+    form.value.time_start = props.time_start ?? ''
+    form.value.time_end = props.time_end ?? ''
   }
 })
 
@@ -71,27 +76,27 @@ function closeModal() {
 }
 
 function resetForm() {
-  form.title = ''
-  form.price = 0
-  form.description = ''
-  form.date_start = ''
-  form.time_start = ''
-  form.time_end = ''
+  form.value.title = ''
+  form.value.price = 0
+  form.value.description = ''
+  form.value.date_start = ''
+  form.value.time_start = ''
+  form.value.time_end = ''
 }
 
 const selectedTime = (time: string) => {
-    form.time_start = time;
+    form.value.time_start = time;
     calculateTimeEnd()
 }
 const isTimePeriodValid = ref(true);
 
 const calculateTimeEnd = () => {
-    const start = DateTime.fromFormat(`${form.date_start} ${form.time_start}`, 'yyyy/MM/dd HH:mm');
+    const start = DateTime.fromFormat(`${form.value.date_start} ${form.value.time_start}`, 'yyyy/MM/dd HH:mm');
     const added = Duration.fromObject(duration.value)
     const end = start.plus(added)
 
-    form.date_end = end.toFormat('yyyy/MM/dd')
-    form.time_end = end.toFormat('HH:mm')
+    form.value.date_end = end.toFormat('yyyy/MM/dd')
+    form.value.time_end = end.toFormat('HH:mm')
 }
 
 const updateDatetime = (value: string, formatFrom: string, formatTo: string) => {
@@ -118,16 +123,20 @@ async function onSubmit() {
   if (!isValid || !isTimePeriodValid.value) return
 
   const payload: EventDataCreate = {
-    title: form.title,
-    price: Number(form.price),
-    description: form.description,
-    date_start: updateDatetime(form.date_start, 'yyyy/MM/dd', 'yyyy-MM-dd'),
-    date_end: updateDatetime(form.date_end, 'yyyy/MM/dd', 'yyyy-MM-dd'),
-    time_start: form.time_start ?? '00:00',
-    time_end: form.time_end ?? '00:00',
+    title: form.value.title,
+    price: Number(form.value.price),
+    description: form.value.description,
+    date_start: updateDatetime(form.value.date_start, 'yyyy/MM/dd', 'yyyy-MM-dd'),
+    date_end: updateDatetime(form.value.date_end, 'yyyy/MM/dd', 'yyyy-MM-dd'),
+    time_start: form.value.time_start ?? '00:00',
+    time_end: form.value.time_end ?? '00:00',
   }
 
-  emit('submit', payload)
+  if(props.form) {
+    emit('edit', payload)
+  } else {
+    emit('submit', payload)
+  }
   closeModal()
 }
 </script>

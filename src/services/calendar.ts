@@ -9,6 +9,15 @@ export const postEvent = async (payload: EventData) => {
         return  error;
     }
 }
+
+export const patchEvent = async (payload: EventData, id: number) => {
+    try {
+        const response = await axios.patch(`/events/${id}`, payload)
+        return response;
+    } catch (error) {
+        return  error;
+    }
+}
 export const getEvents = async (start: string, end: string): Promise<EventData[]> => {
     try {
         const response = await axios.get<EventData[]>(`/events?start=${start}&end=${end}`)
