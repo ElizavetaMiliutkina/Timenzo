@@ -35,6 +35,16 @@ export const useCalendarStore = defineStore('calendar', {
                 return []
             }
         },
+        async patchEvent(payload: EventData, id: number | string): Promise<EventData | null> {
+            try {
+                const response = await axios.patch<EventData>(`/events/${id}`, payload)
+                this.events[this.events.findIndex((event) => event.id === response.data.id)] = response.data
+                return response.data
+            } catch (error) {
+                console.error('Error fetching events:', error)
+                return null
+            }
+        },
         async completeEvent(id: string): Promise<EventData[]> {
             try {
                 const response = await axios.patch<EventData[]>(`/events/${id}/complete`)

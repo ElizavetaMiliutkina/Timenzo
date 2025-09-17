@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -12,7 +12,7 @@ import {
 } from '@fullcalendar/core';
 import ScheduleFormModal from "@/components/calendar/ScheduleFormModal.vue";
 import ShowEventModal from "@/components/calendar/ShowEventModal.vue";
-import { postEvent, patchEvent } from "@/services/calendar";
+import { postEvent } from "@/services/calendar";
 import {EventData, CalendarEvent, ScheduleDataProps, EventDataCreate} from "@/types/calendar";
 import { useCalendarStore } from '@/store/calendar'
 import { DateTime } from 'luxon';
@@ -69,10 +69,13 @@ const handleModalSubmit = async (formData: EventData) => {
 }
 
 const editEvent = async (formData: EventData) => {
-  await patchEvent(formData, editId.value); // Исправить типизацию
-  editForm.value = null
-  editId.value = null
-  isModalOpen.value = false;
+  if(editId.value){
+    await calendarStore.patchEvent(formData, editId.value)
+    editForm.value = null
+    editId.value = null
+    isModalOpen.value = false;
+    isEventCardModalOpen.value = true
+  }
 }
 
 const handleEventClick = (clickInfo: EventClickArg) => {
@@ -91,11 +94,22 @@ const handleEventClick = (clickInfo: EventClickArg) => {
   console.log('Event data:',isEventCardModalOpen.value)
 }
 
+// watch(
+//     () => calendarStore.events,
+//     (newEvents: EventData[]) => {
+//       if (calendarRef.value) {
+//         const calendarApi = calendarRef.value.getApi()
+//         calendarApi.refetchEvents()
+//       }
+//     },
+//     { deep: true }
+// )
+
 const handleEvents = () => {
 
 }
 const editEventForm = (data: EventDataCreate, id: number) => {
-  // isEventCardModalOpen.value = false
+  isEventCardModalOpen.value = false
   editForm.value = data;
   editId.value = id
 
