@@ -199,14 +199,10 @@ const calendarOptions = ref<{
       @submit="handleModalSubmit"
       @edit="editEvent"
   />
-  {{selectedEvent}}
   <ShowEventModal
       v-model="isEventCardModalOpen"
       :event="selectedEvent"
-      @unselect="() => {
-        selectedEvent = null
-        console.log(selectedEvent, 'selectedEvent.value')
-      }"
+      @unselect="() => {selectedEvent = null}"
       @edit="editEventForm"
   />
 </template>
