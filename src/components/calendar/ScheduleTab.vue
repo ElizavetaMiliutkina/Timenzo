@@ -74,7 +74,6 @@ const editEvent = async (formData: EventData) => {
     editForm.value = null
     editId.value = null
     isModalOpen.value = false;
-    isEventCardModalOpen.value = true
   }
 }
 
@@ -93,21 +92,28 @@ const handleEventClick = (clickInfo: EventClickArg) => {
   isEventCardModalOpen.value = true
   console.log('Event data:',isEventCardModalOpen.value)
 }
-
-// watch(
-//     () => calendarStore.events,
-//     (newEvents: EventData[]) => {
-//       if (calendarRef.value) {
-//         const calendarApi = calendarRef.value.getApi()
-//         calendarApi.refetchEvents()
-//       }
-//     },
-//     { deep: true }
-// )
-
+watch(
+    () => calendarStore.events,
+    (newEvents) => {
+      if (calendarRef.value) {
+        const calendarApi = calendarRef.value.getApi();
+        calendarApi.removeAllEvents();
+        calendarApi.addEventSource(newEvents);
+        if(selectedEvent.value) {
+          let updatedSelect = newEvents.find((event) => selectedEvent.value?.id === event.id)
+          if(updatedSelect) {
+            selectedEvent.value = updatedSelect
+            isEventCardModalOpen.value = true
+          }
+        }
+      }
+    },
+    { deep: true }
+)
 const handleEvents = () => {
 
 }
+
 const editEventForm = (data: EventDataCreate, id: number) => {
   isEventCardModalOpen.value = false
   editForm.value = data;
@@ -193,9 +199,14 @@ const calendarOptions = ref<{
       @submit="handleModalSubmit"
       @edit="editEvent"
   />
+  {{selectedEvent}}
   <ShowEventModal
       v-model="isEventCardModalOpen"
       :event="selectedEvent"
+      @unselect="() => {
+        selectedEvent = null
+        console.log(selectedEvent, 'selectedEvent.value')
+      }"
       @edit="editEventForm"
   />
 </template>

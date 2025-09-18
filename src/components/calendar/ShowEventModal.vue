@@ -5,10 +5,10 @@ import { DateTime } from 'luxon';
 
 const props = defineProps<{
   modelValue: boolean;
-  event: EventData;
+  event: EventData | null;
 }>()
 
-const emit = defineEmits(['update:modelValue', 'edit'])
+const emit = defineEmits(['update:modelValue', 'edit', 'unselect'])
 
 const isOpen = ref(false)
 
@@ -17,17 +17,15 @@ watch(() => props.modelValue, val => {
 })
 
 function closeModal() {
+  emit('unselect')
   emit('update:modelValue', false)
 }
 
 const formatTime = (date: string) => {
-  console.log(date, ';date')
   return DateTime.fromISO(date).toFormat('dd/MM/yy HH:mm')
 }
 
 const EditEvent = () => {
- console.log(props.event, 'EventData')
-
   const start = DateTime.fromISO(props.event.start);
   const end = DateTime.fromISO(props.event.end);
 

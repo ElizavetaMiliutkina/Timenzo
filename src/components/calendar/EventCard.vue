@@ -7,7 +7,6 @@ const calendarStore = useCalendarStore()
 
 const filteredEvents = computed(() => {
   const now = new Date()
-  console.log(123, calendarStore.events)
   return calendarStore.events.filter(event => {
     const end = event.end ?? event.start
     const completed = event.extendedProps?.completed
