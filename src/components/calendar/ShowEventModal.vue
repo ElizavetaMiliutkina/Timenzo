@@ -26,20 +26,22 @@ const formatTime = (date: string) => {
 }
 
 const EditEvent = () => {
-  const start = DateTime.fromISO(props.event.start);
-  const end = DateTime.fromISO(props.event.end);
+  if(props.event){
+    const start = DateTime.fromISO(props.event.start);
+    const end = DateTime.fromISO(props.event.end);
 
-  let data = {
-    title: props.event.title,
-    description: props.event.extendedProps.description,
-    price: props.event.extendedProps.price,
-    date_start: start.toFormat('yyyy-MM-dd'),
-    date_end: end.toFormat('yyyy-MM-dd'),
-    time_start: start.toFormat('HH:mm'),
-    time_end: end.toFormat('HH:mm'),
-  };
+    let data = {
+      title: props.event.title,
+      description: props.event.extendedProps.description,
+      price: props.event.extendedProps.price,
+      date_start: start.toFormat('yyyy-MM-dd'),
+      date_end: end.toFormat('yyyy-MM-dd'),
+      time_start: start.toFormat('HH:mm'),
+      time_end: end.toFormat('HH:mm'),
+    };
 
-  emit('edit', data, props.event.id)
+    emit('edit', data, props.event.id)
+  }
 }
 
 </script>
