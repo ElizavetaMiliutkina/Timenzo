@@ -13,8 +13,8 @@ function onLogout() {
 </script>
 
 <template>
-    <div class="q-pa-md">
-      <q-btn-dropdown color="blue" label="" dropdown-icon="change_history">
+    <div class="q-pa-md navbar_btn_dropdown">
+      <q-btn-dropdown label="" dropdown-icon="change_history">
         <q-list>
           <q-item clickable v-close-popup @click="">
             <q-item-section>
@@ -33,6 +33,9 @@ function onLogout() {
 </template>
 
 <style scoped>
-
+.navbar_btn_dropdown .q-btn {
+  border: none!important;
+  position: unset!important;
+}
 </style>
 

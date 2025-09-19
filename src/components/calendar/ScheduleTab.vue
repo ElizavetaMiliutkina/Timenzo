@@ -98,6 +98,7 @@ watch(
       if (calendarRef.value) {
         const calendarApi = calendarRef.value.getApi();
         calendarApi.removeAllEvents();
+        calendarApi.getEventSources().forEach((source: any) => source.remove());
         calendarApi.addEventSource(newEvents);
         if(selectedEvent.value) {
           let updatedSelect = newEvents.find((event) => selectedEvent.value?.id === event.id)

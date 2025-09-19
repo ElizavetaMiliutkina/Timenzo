@@ -1,108 +1,57 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { getLocations } from "@/services/dictionaries";
-import debounce from 'lodash/debounce'
-import TimeZoneSlider from "@/components/TimeZoneSlider.vue";
-import TimePeriod from "@/components/TimePeriod.vue";
+import { ref, watch } from 'vue';
 import Table from "@/components/table/Table.vue";
+import AddStudentModal from "@/components/modals/AddStudentModal.vue";
+import {useStudentStore} from "@/store/students";
 
-interface LocationOption {
-  value: string;
-  label: string;
-}
+const studentStore = useStudentStore()
+const student = ref(null)
+const openStudentModal = ref<boolean>(false)
+const students = ref([])
 
-const searchQuery = ref<string>('');
-const locationSuggestions = ref<LocationOption[]>([]);
-const selectedLocation = ref<LocationOption | null>(null);
+watch(
+    () => studentStore.students,
+    (newVal) => {
+      students.value = newVal
+    },
+    { immediate: true }
+)
 
-const fetchLocations = debounce(async (query: string) => {
-  if (query.length < 2) {
-    locationSuggestions.value = [];
-    return;
+const fetchStudents = () => {
+  if(studentStore.students && studentStore.students.length){
+    students.value = studentStore.students
+  } else {
+    studentStore.getStudents()
   }
-  try {
-    const response = await getLocations(query);
-    locationSuggestions.value = response as LocationOption[] || [];
-  } catch (error) {
-    console.error('Error fetching locations:', error);
-    locationSuggestions.value = [];
-  }
-}, 300);
-
-function onInputChange(val: string) {
-  searchQuery.value = val;
-  fetchLocations(val);
 }
+console.log(studentStore.students, 'studentStore.students')
+fetchStudents()
 
-function selectLocation(loc: LocationOption) {
-  selectedLocation.value = loc;
-  searchQuery.value = loc.label;
-  locationSuggestions.value = [];
-}
+
+
+const columns = [
+  {
+    name: 'name',
+    required: true,
+    label: 'Name',
+    align: 'left',
+    field: row => row.name,
+    format: val => `${val}`,
+    sortable: true
+  },
+  { name: 'price', align: 'left', label: 'Price', field: 'price', sortable: true },
+  { name: 'timezone', label: 'Timezone', align: 'left', field: row => row.timezone, format: val => `${val.label}`,
+     sortable: true },
+  { name: 'comment', label: 'Comment', align: 'left', field: 'comment' },
+]
 </script>
 
 <template>
   <div>
-
-    <div class="autocomplete-container">
-      <input
-          v-model="searchQuery"
-          @input="onInputChange(($event.target as HTMLInputElement).value)"
-          placeholder="Введите город..."
-          class="input-search"
-      />
-      <ul v-if="locationSuggestions.length" class="suggestions-list">
-        <li
-            v-for="loc in locationSuggestions"
-            :key="loc.value"
-            @click="selectLocation(loc)"
-            class="suggestion-item"
-        >
-          {{ loc.label }}
-        </li>
-      </ul>
-    </div>
-
-    <time-zone-slider style="width: 600px; margin-left: 150px"/>
-    <time-period style="width: 600px; margin-left: 150px"/>
-    <Table/>
+    <q-btn label="Add New" color="primary" @click="() => openStudentModal = true"/>
+    <add-student-modal v-model="openStudentModal" :form="student"/>
+    <Table :columns="columns" :rows="students"/>
   </div>
 </template>
 
-<style lang='css'>
-.autocomplete-container {
-  position: relative;
-  width: 300px;
-  margin-bottom: 1rem;
-}
-
-.input-search {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.suggestions-list {
-  position: absolute;
-  width: 100%;
-  background: white;
-  border: 1px solid #ccc;
-  max-height: 200px;
-  overflow-y: auto;
-  z-index: 10;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.suggestion-item {
-  padding: 8px;
-  cursor: pointer;
-}
-
-.suggestion-item:hover {
-  background-color: #f0f0f0;
-}
-
-</style>
+<style lang='css'></style>

@@ -16,3 +16,10 @@ export interface GeoNamesCity {
     lng: number
     population?: number
 }
+
+export interface LocationOption {
+    id: number;
+    label: string;
+    lat: number;
+    lon: number;
+}

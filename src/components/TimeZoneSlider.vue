@@ -1,7 +1,7 @@
 <template>
   <q-card flat class="time-picker">
     <q-card-section>
-      <div class="time-picker__display">
+      <div class="time-picker__display" style="margin-bottom: -44px">
         <q-btn flat label="Local Time" />
         <span class="time">{{ localTimeDisplay }}</span>
       </div>
@@ -26,7 +26,7 @@
         </div>
       </div>
 
-      <div class="time-picker__display">
+      <div class="time-picker__display" style="margin-top: -44px">
         <q-btn flat label="GMT +2:00" />
         <span class="time">{{ gmtTimeDisplay }}</span>
       </div>
