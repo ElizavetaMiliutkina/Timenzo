@@ -48,9 +48,19 @@ const columns = [
 
 <template>
   <div>
-    <q-btn label="Add New" color="primary" @click="() => openStudentModal = true"/>
-    <add-student-modal v-model="openStudentModal" :form="student"/>
-    <Table :columns="columns" :rows="students"/>
+    <q-btn
+      label="Add New"
+      color="primary"
+      @click="() => openStudentModal = true"
+    />
+    <add-student-modal
+      v-model="openStudentModal"
+      :form="student"
+    />
+    <Table
+      :columns="columns"
+      :rows="students"
+    />
   </div>
 </template>
 

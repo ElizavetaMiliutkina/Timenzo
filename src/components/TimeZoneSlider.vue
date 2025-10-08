@@ -1,33 +1,55 @@
 <template>
-  <q-card flat class="time-picker">
+  <q-card
+    flat
+    class="time-picker"
+  >
     <q-card-section>
-      <div class="time-picker__display" style="margin-bottom: -44px">
-        <q-btn flat label="Local Time" />
+      <div
+        class="time-picker__display"
+        style="margin-bottom: -44px"
+      >
+        <q-btn
+          flat
+          label="Local Time"
+        />
         <span class="time">{{ localTimeDisplay }}</span>
       </div>
 
       <div
-          ref="scrollWrapper"
-          class="time-picker__scroll-wrapper custom-scrollbar"
-          @scroll="onScroll"
+        ref="scrollWrapper"
+        class="time-picker__scroll-wrapper custom-scrollbar"
+        @scroll="onScroll"
       >
-        <div ref="scrollTrack" class="scroll-track">
+        <div
+          ref="scrollTrack"
+          class="scroll-track"
+        >
           <div
-              v-for="(label, index) in timeLabels"
-              :key="index"
-              class="tick"
-              :class="{ active: index === selectedIndex }"
-              @click="scrollToIndex(index)"
+            v-for="(label, index) in timeLabels"
+            :key="index"
+            class="tick"
+            :class="{ active: index === selectedIndex }"
+            @click="scrollToIndex(index)"
           >
-            <div class="tick-label">{{ label }}</div>
+            <div class="tick-label">
+              {{ label }}
+            </div>
             <div class="line" />
-            <div class="tick-label">{{ timeLabelsGmt[index] }}</div>
+            <div class="tick-label">
+              {{ timeLabelsGmt[index] }}
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="time-picker__display" style="margin-top: -44px">
-        <q-btn flat label="GMT +2:00" />
+      <div
+        class="time-picker__display"
+        style="margin-top: -44px"
+      >
+        <q-btn
+          flat
+          label="GMT +2:00"
+        />
         <span class="time">{{ gmtTimeDisplay }}</span>
       </div>
     </q-card-section>

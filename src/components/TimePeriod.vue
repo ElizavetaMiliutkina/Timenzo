@@ -45,40 +45,45 @@ const validateForm = () => {
   <div>
     <div class="time-period">
       <q-input
-          v-model.number="form.days"
-          label="Days"
-          type="number"
-          :min="0"
-          :max="42"
-          dense
-          outlined
-          :error="!isValid"
-          @update:model-value="validateForm"
+        v-model.number="form.days"
+        label="Days"
+        type="number"
+        :min="0"
+        :max="42"
+        dense
+        outlined
+        :error="!isValid"
+        @update:model-value="validateForm"
       />
       <q-input
-          v-model.number="form.hours"
-          label="Hours"
-          type="number"
-          :min="0"
-          :max="23"
-          dense
-          outlined
-          :error="!isValid"
-          @update:model-value="validateForm"
+        v-model.number="form.hours"
+        label="Hours"
+        type="number"
+        :min="0"
+        :max="23"
+        dense
+        outlined
+        :error="!isValid"
+        @update:model-value="validateForm"
       />
       <q-input
-          v-model.number="form.minutes"
-          label="Minutes"
-          type="number"
-          :min="0"
-          :max="59"
-          dense
-          outlined
-          :error="!isValid"
-          @update:model-value="validateForm"
+        v-model.number="form.minutes"
+        label="Minutes"
+        type="number"
+        :min="0"
+        :max="59"
+        dense
+        outlined
+        :error="!isValid"
+        @update:model-value="validateForm"
       />
     </div>
-    <div class="error-message" v-if="!isValid">At least one field (Days, Hours, Minutes) must be greater than 0</div>
+    <div
+      v-if="!isValid"
+      class="error-message"
+    >
+      At least one field (Days, Hours, Minutes) must be greater than 0
+    </div>
   </div>
 </template>
 

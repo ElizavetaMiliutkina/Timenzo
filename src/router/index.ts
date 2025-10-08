@@ -27,6 +27,12 @@ const routes = [
         meta: { requiresAuth: true },
         component: () => import('../views/Calendar.vue'),
     },
+    {
+        path: '/test',
+        name: 'Test',
+        meta: { requiresAuth: true },
+        component: () => import('../views/Test.vue'),
+    },
 ];
 
 const router = createRouter({

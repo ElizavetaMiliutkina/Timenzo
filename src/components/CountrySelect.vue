@@ -30,24 +30,42 @@ function selectCity(city: City) {
 <template>
   <div class="city-select">
     <input
-        v-model="search"
-        type="text"
-        placeholder="Введите город или страну..."
-        class="form-control"
-    />
-    <div v-if="store.loading" class="mt-1">Loading cities...</div>
-    <div v-else-if="store.error" class="mt-1 text-danger">Error: {{ store.error }}</div>
-    <ul v-else-if="filteredCities.length" class="list-group mt-1">
+      v-model="search"
+      type="text"
+      placeholder="Введите город или страну..."
+      class="form-control"
+    >
+    <div
+      v-if="store.loading"
+      class="mt-1"
+    >
+      Loading cities...
+    </div>
+    <div
+      v-else-if="store.error"
+      class="mt-1 text-danger"
+    >
+      Error: {{ store.error }}
+    </div>
+    <ul
+      v-else-if="filteredCities.length"
+      class="list-group mt-1"
+    >
       <li
-          v-for="city in filteredCities"
-          :key="city.id"
-          @click="selectCity(city)"
-          class="list-group-item list-group-item-action"
+        v-for="city in filteredCities"
+        :key="city.id"
+        class="list-group-item list-group-item-action"
+        @click="selectCity(city)"
       >
         {{ city.name }}, {{ city.country }} ({{ city.timezone }})
       </li>
     </ul>
-    <div v-else class="mt-1">No cities found</div>
+    <div
+      v-else
+      class="mt-1"
+    >
+      No cities found
+    </div>
   </div>
 </template>
 

@@ -13,23 +13,34 @@ function onLogout() {
 </script>
 
 <template>
-    <div class="q-pa-md navbar_btn_dropdown">
-      <q-btn-dropdown label="" dropdown-icon="change_history">
-        <q-list>
-          <q-item clickable v-close-popup @click="">
-            <q-item-section>
-              <q-item-label>Settings</q-item-label>
-            </q-item-section>
-          </q-item>
+  <div class="q-pa-md navbar_btn_dropdown">
+    <q-btn-dropdown
+      label=""
+      dropdown-icon="change_history"
+    >
+      <q-list>
+        <q-item
+          v-close-popup
+          clickable
+          @click=""
+        >
+          <q-item-section>
+            <q-item-label>Settings</q-item-label>
+          </q-item-section>
+        </q-item>
 
-          <q-item clickable v-close-popup @click="onLogout">
-            <q-item-section>
-              <q-item-label>Logout</q-item-label>
-            </q-item-section>
-          </q-item>
-        </q-list>
-      </q-btn-dropdown>
-    </div>
+        <q-item
+          v-close-popup
+          clickable
+          @click="onLogout"
+        >
+          <q-item-section>
+            <q-item-label>Logout</q-item-label>
+          </q-item-section>
+        </q-item>
+      </q-list>
+    </q-btn-dropdown>
+  </div>
 </template>
 
 <style scoped>

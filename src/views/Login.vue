@@ -5,33 +5,40 @@
       <div class="form-group">
         <label for="email">Email:</label>
         <input
-            id="email"
-            v-model="email"
-            type="email"
-            required
-            placeholder="Введите email"
-            autocomplete="username"
-        />
+          id="email"
+          v-model="email"
+          type="email"
+          required
+          placeholder="Введите email"
+          autocomplete="username"
+        >
       </div>
 
       <div class="form-group">
         <label for="password">Пароль:</label>
         <input
-            id="password"
-            v-model="password"
-            type="password"
-            required
-            placeholder="Введите пароль"
-            autocomplete="current-password"
-        />
+          id="password"
+          v-model="password"
+          type="password"
+          required
+          placeholder="Введите пароль"
+          autocomplete="current-password"
+        >
       </div>
 
-      <button type="submit">Войти</button>
+      <button type="submit">
+        Войти
+      </button>
 
-      <a href="/register" >Создать аккаунт</a>
+      <a href="/register">Создать аккаунт</a>
     </form>
 
-    <p v-if="error" class="error">{{ error }}</p>
+    <p
+      v-if="error"
+      class="error"
+    >
+      {{ error }}
+    </p>
   </div>
 </template>
 

@@ -142,91 +142,143 @@ async function onSubmit() {
 </script>
 
 <template>
-  <q-dialog v-model="props.modelValue" persistent>
+  <q-dialog
+    v-model="props.modelValue"
+    persistent
+  >
     <q-card style="min-width: 400px">
       <q-card-section>
-        <div class="text-h6">New Schedule</div>
+        <div class="text-h6">
+          New Schedule
+        </div>
       </q-card-section>
 
       <q-card-section>
-        <q-form ref="formRef" @submit.prevent="onSubmit" class="q-gutter-md">
+        <q-form
+          ref="formRef"
+          class="q-gutter-md"
+          @submit.prevent="onSubmit"
+        >
           <q-input
-              filled
-              v-model="form.title"
-              label="Title *"
-              :rules="[val => !!val || 'Enter Title']"
+            v-model="form.title"
+            filled
+            label="Title *"
+            :rules="[val => !!val || 'Enter Title']"
           />
 
           <q-input
-              filled
-              type="number"
-              v-model="form.price"
-              label="Price"
-              :rules="[
+            v-model="form.price"
+            filled
+            type="number"
+            label="Price"
+            :rules="[
               val => val !== null && val !== '' || 'Enter price',
               val => val >= 0 || 'Price must be positive'
             ]"
           />
 
           <q-input
-              filled
-              v-model="form.description"
-              type="textarea"
-              label="Description"
-              :rules="[val => val.length >= 0 || 'Enter description']"
+            v-model="form.description"
+            filled
+            type="textarea"
+            label="Description"
+            :rules="[val => val.length >= 0 || 'Enter description']"
           />
 
           <div class="date-block">
-            <q-input v-model="form.date_start" label="Select Start Date" readonly>
-              <template v-slot:append>
-                <q-icon name="event" class="cursor-pointer">
-                  <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+            <q-input
+              v-model="form.date_start"
+              label="Select Start Date"
+              readonly
+            >
+              <template #append>
+                <q-icon
+                  name="event"
+                  class="cursor-pointer"
+                >
+                  <q-popup-proxy
+                    cover
+                    transition-show="scale"
+                    transition-hide="scale"
+                  >
                     <div class="q-pa-md">
-                      <q-date v-model="form.date_start" v-close-popup/>
+                      <q-date
+                        v-model="form.date_start"
+                        v-close-popup
+                      />
                     </div>
                   </q-popup-proxy>
                 </q-icon>
               </template>
             </q-input>
 
-            <q-input v-model="form.date_end" label="Select End Date" readonly>
-              <template v-slot:append>
-                <q-icon name="event" class="cursor-pointer">
-                  <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+            <q-input
+              v-model="form.date_end"
+              label="Select End Date"
+              readonly
+            >
+              <template #append>
+                <q-icon
+                  name="event"
+                  class="cursor-pointer"
+                >
+                  <q-popup-proxy
+                    cover
+                    transition-show="scale"
+                    transition-hide="scale"
+                  >
                     <div class="q-pa-md">
-                      <q-date v-model="form.date_end" v-close-popup/>
+                      <q-date
+                        v-model="form.date_end"
+                        v-close-popup
+                      />
                     </div>
                   </q-popup-proxy>
                 </q-icon>
               </template>
             </q-input>
           </div>
-          <time-zone-slider :time="form.time_start" @selected-time="selectedTime"/>
+          <time-zone-slider
+            :time="form.time_start"
+            @selected-time="selectedTime"
+          />
           <div class="time-info-block">
-            <div class="text-center flex justify-center text-weight-bolder mdi-size-l" style="gap: 70px">
-              <span>{{formatedDateTime(form.time_start, form.date_start, 'weekday')}}</span>
-              <span>{{formatedDateTime(form.time_end, form.date_end, 'weekday')}}</span>
+            <div
+              class="text-center flex justify-center text-weight-bolder mdi-size-l"
+              style="gap: 70px"
+            >
+              <span>{{ formatedDateTime(form.time_start, form.date_start, 'weekday') }}</span>
+              <span>{{ formatedDateTime(form.time_end, form.date_end, 'weekday') }}</span>
             </div>
             <div class="text-center">
               From <span class="text-weight-bolder">
-              {{formatedDateTime(form.time_start, form.date_start, 'date')}}
-            </span>
-              To <span class="text-weight-bolder">{{formatedDateTime(form.time_end, form.date_end, 'date')}}</span>
+                {{ formatedDateTime(form.time_start, form.date_start, 'date') }}
+              </span>
+              To <span class="text-weight-bolder">{{ formatedDateTime(form.time_end, form.date_end, 'date') }}</span>
             </div>
           </div>
           <label style="display: block; margin-top: 20px">Duration</label>
           <time-period
-              v-model="duration"
-              style="width: 290px;"
-              @update:valid="isTimePeriodValid = $event"
-              @update:duration="updateDuration"
+            v-model="duration"
+            style="width: 290px;"
+            @update:valid="isTimePeriodValid = $event"
+            @update:duration="updateDuration"
           />
         </q-form>
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Cancel" color="primary" @click="closeModal" />
-        <q-btn label="Submit" color="primary" @click="onSubmit" />
+        <q-btn
+          flat
+          label="Cancel"
+          color="primary"
+          @click="closeModal"
+        />
+        <q-btn
+          label="Submit"
+          color="primary"
+          @click="onSubmit"
+        />
       </q-card-actions>
     </q-card>
   </q-dialog>

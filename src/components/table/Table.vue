@@ -20,14 +20,15 @@ const props = defineProps<{
 <template>
   <div class="q-pa-md">
     <q-table
-        flat bordered
-        title="Students"
-        :rows="rows"
-        :columns="columns"
-        row-key="name"
-        dark
-        color="amber"
-        :pagination="{ rowsPerPage: 10 }"
+      flat
+      bordered
+      title="Students"
+      :rows="rows"
+      :columns="columns"
+      row-key="name"
+      dark
+      color="amber"
+      :pagination="{ rowsPerPage: 10 }"
     />
   </div>
 </template>

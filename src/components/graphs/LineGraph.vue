@@ -65,7 +65,10 @@ const chartOptions = {
 </script>
 
 <template>
-  <Line :data="chartData" :options="chartOptions" />
+  <Line
+    :data="chartData"
+    :options="chartOptions"
+  />
 </template>
 
 <style scoped>

@@ -5,45 +5,57 @@
       <div class="form-group">
         <label for="email">Email:</label>
         <input
-            id="email"
-            v-model="email"
-            type="email"
-            required
-            placeholder="Введите email"
-            autocomplete="username"
-        />
+          id="email"
+          v-model="email"
+          type="email"
+          required
+          placeholder="Введите email"
+          autocomplete="username"
+        >
       </div>
 
       <div class="form-group">
         <label for="password">Пароль:</label>
         <input
-            id="password"
-            v-model="password"
-            type="password"
-            required
-            placeholder="Введите пароль"
-            autocomplete="new-password"
-        />
+          id="password"
+          v-model="password"
+          type="password"
+          required
+          placeholder="Введите пароль"
+          autocomplete="new-password"
+        >
       </div>
 
       <div class="form-group">
         <label for="confirmPassword">Подтверждение пароля:</label>
         <input
-            id="confirmPassword"
-            v-model="confirmPassword"
-            type="password"
-            required
-            placeholder="Подтвердите пароль"
-            autocomplete="new-password"
-        />
+          id="confirmPassword"
+          v-model="confirmPassword"
+          type="password"
+          required
+          placeholder="Подтвердите пароль"
+          autocomplete="new-password"
+        >
       </div>
-<!--      <q-toggle v-model="" label="I accept the license and terms"></q-toggle>-->
-      <button type="submit">Зарегистрироваться</button>
-      <a href="/login" >Уже есть аккаунт Timenzo? Войти</a>
+      <!--      <q-toggle v-model="" label="I accept the license and terms"></q-toggle>-->
+      <button type="submit">
+        Зарегистрироваться
+      </button>
+      <a href="/login">Уже есть аккаунт Timenzo? Войти</a>
     </form>
 
-    <p v-if="error" class="error">{{ error }}</p>
-    <p v-if="success" class="success">{{ success }}</p>
+    <p
+      v-if="error"
+      class="error"
+    >
+      {{ error }}
+    </p>
+    <p
+      v-if="success"
+      class="success"
+    >
+      {{ success }}
+    </p>
   </div>
 </template>
 

@@ -47,20 +47,24 @@ watch(period, async () => {
 <template>
   <div class="flex justify-end">
     <q-select
-        rounded
-        outlined
-        v-model="period"
-        :options="periods"
-        label="Period"
-        emit-value
-        map-options
-        style="width: 200px"
-        menu-anchor="bottom left"
-        menu-self="top left"
-        behavior="menu"
+      v-model="period"
+      rounded
+      outlined
+      :options="periods"
+      label="Period"
+      emit-value
+      map-options
+      style="width: 200px"
+      menu-anchor="bottom left"
+      menu-self="top left"
+      behavior="menu"
     />
   </div>
-  <line-graph v-if="data.length" :labels="labels" :data="data" />
+  <line-graph
+    v-if="data.length"
+    :labels="labels"
+    :data="data"
+  />
 </template>
 
 <style scoped>

@@ -184,9 +184,9 @@ const calendarOptions = ref<{
 
 <template>
   <FullCalendar
-      ref="calendarRef"
-      class="demo-app-calendar"
-      :options="calendarOptions"
+    ref="calendarRef"
+    class="demo-app-calendar"
+    :options="calendarOptions"
   >
     <template #eventContent="{ event, timeText }">
       <b>{{ timeText }}</b>
@@ -194,17 +194,17 @@ const calendarOptions = ref<{
     </template>
   </FullCalendar>
   <ScheduleFormModal
-      v-model="isModalOpen"
-      v-bind="scheduleData"
-      :form="editForm"
-      @submit="handleModalSubmit"
-      @edit="editEvent"
+    v-model="isModalOpen"
+    v-bind="scheduleData"
+    :form="editForm"
+    @submit="handleModalSubmit"
+    @edit="editEvent"
   />
   <ShowEventModal
-      v-model="isEventCardModalOpen"
-      :event="selectedEvent"
-      @unselect="() => {selectedEvent = null}"
-      @edit="editEventForm"
+    v-model="isEventCardModalOpen"
+    :event="selectedEvent"
+    @unselect="() => {selectedEvent = null}"
+    @edit="editEventForm"
   />
 </template>
 

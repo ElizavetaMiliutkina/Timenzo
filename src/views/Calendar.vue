@@ -22,44 +22,52 @@ const tab = ref('schedule')
   <div class="demo-app">
     <div class="demo-app-sidebar">
       <div class="demo-app-sidebar-section">
-<!--        <label>-->
-<!--          <input-->
-<!--              type="checkbox"-->
-<!--              :checked="calendarOptions.weekends"-->
-<!--              @change="handleWeekendsToggle"-->
-<!--          />-->
-<!--          toggle weekends-->
-<!--        </label>-->
+        <!--        <label>-->
+        <!--          <input-->
+        <!--              type="checkbox"-->
+        <!--              :checked="calendarOptions.weekends"-->
+        <!--              @change="handleWeekendsToggle"-->
+        <!--          />-->
+        <!--          toggle weekends-->
+        <!--        </label>-->
       </div>
       <event-card
-          title="All Events"
+        title="All Events"
       />
     </div>
     <div class="demo-app-main">
       <q-tabs
-          v-model="tab"
-          dense
-          align="left"
-          class="text-primary"
-          active-color="primary"
-          indicator-color="primary"
-          narrow-indicator
+        v-model="tab"
+        dense
+        align="left"
+        class="text-primary"
+        active-color="primary"
+        indicator-color="primary"
+        narrow-indicator
       >
-        <q-tab name="schedule" label="Schedule" />
-        <q-tab name="graph" label="Income Graph" />
+        <q-tab
+          name="schedule"
+          label="Schedule"
+        />
+        <q-tab
+          name="graph"
+          label="Income Graph"
+        />
       </q-tabs>
 
-      <q-tab-panels v-model="tab" animated>
+      <q-tab-panels
+        v-model="tab"
+        animated
+      >
         <q-tab-panel name="schedule">
-          <ScheduleTab/>
+          <ScheduleTab />
         </q-tab-panel>
 
         <q-tab-panel name="graph">
-          <graph-tab/>
+          <graph-tab />
         </q-tab-panel>
       </q-tab-panels>
     </div>
-
   </div>
 </template>
 

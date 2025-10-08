@@ -28,7 +28,11 @@ const completeEv = async (id: string) => {
   <div>
     <h2>All Events ({{ filteredEvents.length }})</h2>
 
-    <div v-for="event in filteredEvents" :key="event.id" class="calendar-card">
+    <div
+      v-for="event in filteredEvents"
+      :key="event.id"
+      class="calendar-card"
+    >
       <div class="calendar-card__header">
         <div>{{ event.title }}</div>
         <div>{{ format(parseISO(event.start), 'dd.MM') }} - {{ format(parseISO(event.start), 'HH:mm') }}</div>
@@ -37,7 +41,12 @@ const completeEv = async (id: string) => {
         <div>{{ event.extendedProps.description }}</div>
       </div>
       <div class="calendar-card__footer">
-        <q-btn color="primary" @click="completeEv(event.id)"> Complete </q-btn>
+        <q-btn
+          color="primary"
+          @click="completeEv(event.id)"
+        >
+          Complete
+        </q-btn>
       </div>
     </div>
   </div>

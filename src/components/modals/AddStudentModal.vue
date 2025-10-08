@@ -44,44 +44,61 @@ const resetForm = () => {
 </script>
 
 <template>
-  <q-dialog v-model="props.modelValue" persistent>
+  <q-dialog
+    v-model="props.modelValue"
+    persistent
+  >
     <q-card style="min-width: 400px">
       <q-card-section>
-        <div class="text-h6">New Schedule</div>
-        <q-form ref="formRef" class="q-gutter-md">
+        <div class="text-h6">
+          New Schedule
+        </div>
+        <q-form
+          ref="formRef"
+          class="q-gutter-md"
+        >
           <q-input
-              filled
-              v-model="form.name"
-              label="Name *"
-              :rules="[val => !!val || 'Enter Name']"
+            v-model="form.name"
+            filled
+            label="Name *"
+            :rules="[val => !!val || 'Enter Name']"
           />
 
           <q-input
-              filled
-              type="number"
-              v-model="form.price"
-              label="Price"
-              :rules="[
+            v-model="form.price"
+            filled
+            type="number"
+            label="Price"
+            :rules="[
               val => val !== null && val !== '' || 'Enter price',
               val => val >= 0 || 'Price must be positive'
             ]"
           />
 
-          <location-select v-model="form.timezone"/>
+          <location-select v-model="form.timezone" />
 
           <q-input
-              filled
-              v-model="form.comment"
-              type="textarea"
-              label="Comment"
-              :rules="[val => val.length >= 0 || 'Enter comment']"
+            v-model="form.comment"
+            filled
+            type="textarea"
+            label="Comment"
+            :rules="[val => val.length >= 0 || 'Enter comment']"
           />
         </q-form>
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Cancel" color="primary" @click="closeModal" />
-        <q-btn label="Submit" color="primary" @click="onSubmit" />
+        <q-btn
+          flat
+          label="Cancel"
+          color="primary"
+          @click="closeModal"
+        />
+        <q-btn
+          label="Submit"
+          color="primary"
+          @click="onSubmit"
+        />
       </q-card-actions>
     </q-card>
   </q-dialog>

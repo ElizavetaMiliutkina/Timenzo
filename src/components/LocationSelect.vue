@@ -41,22 +41,22 @@ function onSelect(val: LocationOption) {
 </script>
 
 <template>
-    <div>
-      <q-select
-          v-model="selectedLocation"
-          use-input
-          input-debounce="0"
-          :options="locationSuggestions"
-          :rules="[val => !!val || 'Enter your city']"
-          option-label="label"
-          option-value="value"
-          @filter="onFilter"
-          @update:model-value="onSelect"
-          label="Enter your city... *"
-          square
-          filled
-      />
-    </div>
+  <div>
+    <q-select
+      v-model="selectedLocation"
+      use-input
+      input-debounce="0"
+      :options="locationSuggestions"
+      :rules="[val => !!val || 'Enter your city']"
+      option-label="label"
+      option-value="value"
+      label="Enter your city... *"
+      square
+      filled
+      @filter="onFilter"
+      @update:model-value="onSelect"
+    />
+  </div>
 </template>
 
 <style lang='css'>
