@@ -10,7 +10,7 @@ interface Column {
   required?: boolean
 }
 
-const props = defineProps<{
+defineProps<{
   columns: Column[]
   rows: any[]
 }>()
@@ -26,7 +26,6 @@ const props = defineProps<{
       :rows="rows"
       :columns="columns"
       row-key="name"
-      dark
       color="amber"
       :pagination="{ rowsPerPage: 10 }"
     />

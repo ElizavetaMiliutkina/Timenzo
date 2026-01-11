@@ -1,19 +1,17 @@
 import axios from '@/plugins/axios'
-import { EventData } from "@/types/calendar";
+import {EventData, EventDataCreate} from "@/types/calendar";
 
-export const postEvent = async (payload: EventData) => {
+export const postEvent = async (payload: EventDataCreate) => {
     try {
-        const response = await axios.post('/event', payload)
-        return response;
+        return await axios.post('/event', payload)
     } catch (error) {
         return  error;
     }
 }
 
-export const patchEvent = async (payload: EventData, id: number) => {
+export const patchEvent = async (payload: EventDataCreate, id: number) => {
     try {
-        const response = await axios.patch(`/events/${id}`, payload)
-        return response;
+        return await axios.patch(`/events/${id}`, payload)
     } catch (error) {
         return  error;
     }

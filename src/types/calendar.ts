@@ -11,6 +11,7 @@ export interface EventData {
 }
 
 export interface EventDataCreate {
+    id?: string
     date_start: string;
     date_end: string;
     description: string;
@@ -19,6 +20,7 @@ export interface EventDataCreate {
     time_end: string;
     time_start: string;
     datetime?: string;
+    duration?: string;
 }
 export interface ScheduleDataProps {
     date_start: string;

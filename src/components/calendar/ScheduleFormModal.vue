@@ -1,25 +1,24 @@
 <script setup lang="ts">
-import { ref, watch, defineEmits, defineProps } from 'vue'
-import { EventDataCreate } from '@/types/calendar'
+import { ref, watch, computed } from 'vue'
 import type { QForm } from 'quasar'
-import TimeZoneSlider from "@/components/TimeZoneSlider.vue";
-import TimePeriod from "@/components/TimePeriod.vue";
 import { DateTime, Duration } from 'luxon'
+import { EventDataCreate } from '@/types/calendar'
+
+import TimeZoneSlider from '@/components/TimeZoneSlider.vue'
+import TimePeriod from '@/components/TimePeriod.vue'
 
 const props = defineProps<{
-  modelValue: boolean;
-  date_start: string;
-  date_end: string;
-  time_start: string | null;
-  time_end: string | null;
-  duration: number
-  form: EventDataCreate | null
+  modelValue: boolean
+  model: EventDataCreate
+  mode: 'create' | 'edit'
 }>()
-const emit = defineEmits(['update:modelValue', 'submit', 'edit'])
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', v: boolean): void
+  (e: 'submit', payload: EventDataCreate): void
+}>()
 
 const formRef = ref<QForm | null>(null)
-const duration = ref({ days: 0, hours: 1, minutes: 0 })
-
 
 const form = ref<EventDataCreate>({
   title: '',
@@ -31,119 +30,125 @@ const form = ref<EventDataCreate>({
   time_end: '',
 })
 
-
-const updateDuration = (val: { days: number; hours: number; minutes: number }) => {
-  duration.value = val
-  if (form.value.time_start) {
-    calculateTimeEnd()
-  }
-}
-
-const updateDurationFromHours = (hours: number) => {
-  const dur = Duration.fromObject({ hours }).shiftTo('days', 'hours', 'minutes').toObject();
-  duration.value = {
-    days: dur.days || 0,
-    hours: dur.hours || 0,
-    minutes: dur.minutes || 0,
-  };
-};
-
-watch(() => form.value.date_start, () => calculateTimeEnd())
-
-watch(() => props.modelValue, val => {
-  updateDurationFromHours(props.duration)
-
-  console.log(props.date_start, '-----', props.date_end)
-  console.log(props.time_start, '-----', props.time_end)
-
-  if(props.form) {
-    form.value = props.form
-    form.value.date_start = updateDatetime(form.value.date_start, 'yyyy-MM-dd', 'yyyy/MM/dd')
-    form.value.date_end = updateDatetime(form.value.date_end, 'yyyy-MM-dd', 'yyyy/MM/dd')
-  }
-
-  if (val && props.date_start && props.date_end) {
-    form.value.date_start = updateDatetime(props.date_start, 'yyyy-MM-dd', 'yyyy/MM/dd')
-    form.value.date_end = updateDatetime(props.date_end, 'yyyy-MM-dd', 'yyyy/MM/dd')
-    form.value.time_start = props.time_start ?? ''
-    form.value.time_end = props.time_end ?? ''
-  }
+const dialogModel = computed({
+  get: () => props.modelValue,
+  set: (value: boolean) => {
+    emit('update:modelValue', value)
+  },
 })
 
-function closeModal() {
-  emit('update:modelValue', false)
-  resetForm()
-}
+/* ===================== SYNC FROM PARENT ===================== */
 
-function resetForm() {
-  form.value.title = ''
-  form.value.price = 0
-  form.value.description = ''
-  form.value.date_start = ''
-  form.value.time_start = ''
-  form.value.time_end = ''
-}
+watch(
+    () => props.model,
+    (model) => {
+      form.value = { ...model }
+      syncDurationFromForm()
+    },
+    { immediate: true }
+)
 
-const selectedTime = (time: string) => {
-    form.value.time_start = time;
-    calculateTimeEnd()
-}
-const isTimePeriodValid = ref(true);
+/* ===================== DURATION ===================== */
 
-const calculateTimeEnd = () => {
-    const start = DateTime.fromFormat(`${form.value.date_start} ${form.value.time_start}`, 'yyyy/MM/dd HH:mm');
-    const added = Duration.fromObject(duration.value)
-    const end = start.plus(added)
+const duration = ref({ days: 0, hours: 1, minutes: 0 })
+const isTimePeriodValid = ref(true)
 
-    form.value.date_end = end.toFormat('yyyy/MM/dd')
-    form.value.time_end = end.toFormat('HH:mm')
-}
+function syncDurationFromForm() {
+  if (!form.value.date_start || !form.value.time_start || !form.value.date_end || !form.value.time_end) {
+    return
+  }
 
-const updateDatetime = (value: string, formatFrom: string, formatTo: string) => {
-  return DateTime.fromFormat(value, formatFrom).toFormat(formatTo)
-}
-const formatedDateTime = (time:string, date:string, type: 'date' | 'weekday') => {
-  if (!time || !date) return '';
+  const start = DateTime.fromFormat(
+      `${form.value.date_start} ${form.value.time_start}`,
+      'yyyy-MM-dd HH:mm'
+  )
+  const end = DateTime.fromFormat(
+      `${form.value.date_end} ${form.value.time_end}`,
+      'yyyy-MM-dd HH:mm'
+  )
 
-  const dateTime = DateTime.fromFormat(`${date} ${time}`, 'yyyy/MM/dd HH:mm');
+  const diff = end.diff(start, ['days', 'hours', 'minutes']).toObject()
 
-  if(type === 'weekday'){
-    return dateTime.toFormat('cccc')
-  } else {
-    return dateTime.isValid
-        ? dateTime.toFormat('MMM dd hh:mm a')
-        : 'Invalid DateTime';
+  duration.value = {
+    days: diff.days ?? 0,
+    hours: diff.hours ?? 0,
+    minutes: diff.minutes ?? 0,
   }
 }
+
+/* ===================== TIME CALC ===================== */
+
+function calculateTimeEnd() {
+  if (!form.value.date_start || !form.value.time_start) return
+
+  const start = DateTime.fromFormat(
+      `${form.value.date_start} ${form.value.time_start}`,
+      'yyyy-MM-dd HH:mm'
+  )
+
+  const end = start.plus(Duration.fromObject(duration.value))
+
+  form.value.date_end = end.toFormat('yyyy-MM-dd')
+  form.value.time_end = end.toFormat('HH:mm')
+}
+
+function updateDuration(val: { days: number; hours: number; minutes: number }) {
+  duration.value = val
+  calculateTimeEnd()
+}
+
+function selectedTime(time: string) {
+  form.value.time_start = time
+  calculateTimeEnd()
+}
+
+/* ===================== SUBMIT ===================== */
 
 async function onSubmit() {
   if (!formRef.value) return
+
   const isValid = await formRef.value.validate()
-  console.log(isTimePeriodValid.value, '!isTimePeriodValid')
   if (!isValid || !isTimePeriodValid.value) return
 
-  const payload: EventDataCreate = {
-    title: form.value.title,
+  emit('submit', {
+    ...form.value,
     price: Number(form.value.price),
-    description: form.value.description,
-    date_start: updateDatetime(form.value.date_start, 'yyyy/MM/dd', 'yyyy-MM-dd'),
-    date_end: updateDatetime(form.value.date_end, 'yyyy/MM/dd', 'yyyy-MM-dd'),
-    time_start: form.value.time_start ?? '00:00',
-    time_end: form.value.time_end ?? '00:00',
+    time_start: form.value.time_start || '00:00',
+    time_end: form.value.time_end || '00:00',
+  })
+
+  closeModal()
+}
+
+function closeModal() {
+  emit('update:modelValue', false)
+}
+
+function formatedDateTime(
+    time: string,
+    date: string,
+    type: 'date' | 'weekday'
+) {
+  if (!time || !date) return ''
+
+  const dateTime = DateTime.fromFormat(
+      `${date} ${time}`,
+      'yyyy-MM-dd HH:mm'
+  )
+
+  if (!dateTime.isValid) return ''
+
+  if (type === 'weekday') {
+    return dateTime.toFormat('cccc')
   }
 
-  if(props.form) {
-    emit('edit', payload)
-  } else {
-    emit('submit', payload)
-  }
-  closeModal()
+  return dateTime.toFormat('MMM dd HH:mm')
 }
 </script>
 
 <template>
   <q-dialog
-    v-model="props.modelValue"
+    v-model="dialogModel"
     persistent
   >
     <q-card style="min-width: 400px">
