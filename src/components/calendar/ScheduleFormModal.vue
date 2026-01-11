@@ -3,6 +3,8 @@ import { ref, watch, computed } from 'vue'
 import type { QForm } from 'quasar'
 import { DateTime, Duration } from 'luxon'
 import { EventDataCreate } from '@/types/calendar'
+import { Currency } from '@/types/dictionaries'
+import { getCurrencies } from "@/services/dictionaries";
 
 import TimeZoneSlider from '@/components/TimeZoneSlider.vue'
 import TimePeriod from '@/components/TimePeriod.vue'
@@ -29,6 +31,13 @@ const form = ref<EventDataCreate>({
   time_start: '',
   time_end: '',
 })
+const currencies = ref<Currency[]>([])
+
+const getCurrenciesList = async () => {
+  const response = await getCurrencies()
+  currencies.value = response
+}
+getCurrenciesList()
 
 const dialogModel = computed({
   get: () => props.modelValue,
@@ -42,6 +51,7 @@ const dialogModel = computed({
 watch(
     () => props.model,
     (model) => {
+      if (!model) return
       form.value = { ...model }
       syncDurationFromForm()
     },
@@ -171,16 +181,34 @@ function formatedDateTime(
             :rules="[val => !!val || 'Enter Title']"
           />
 
-          <q-input
-            v-model="form.price"
-            filled
-            type="number"
-            label="Price"
-            :rules="[
-              val => val !== null && val !== '' || 'Enter price',
-              val => val >= 0 || 'Price must be positive'
-            ]"
-          />
+          <div class="row q-col-gutter-md">
+            <div class="col-7">
+              <q-input
+                v-model="form.price"
+                filled
+                type="number"
+                label="Price"
+                :rules="[
+                  val => val !== null && val !== '' || 'Enter price',
+                  val => val >= 0 || 'Price must be positive'
+                ]"
+              />
+            </div>
+
+            <div class="col-5">
+              <q-select
+                v-model="form.currency_id"
+                filled
+                label="Currency"
+                :options="currencies"
+                emit-value
+                map-options
+                option-label="label"
+                option-value="id"
+                :rules="[val => !!val || 'Select currency']"
+              />
+            </div>
+          </div>
 
           <q-input
             v-model="form.description"

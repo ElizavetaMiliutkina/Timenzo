@@ -39,8 +39,12 @@ const selectedEvent = ref<EventData | null>(null)
 /* ===================== CALENDAR HANDLERS ===================== */
 
 function handleDateSelect(selectInfo: DateSelectArg) {
+  const isAllDay = !selectInfo.startStr.includes('T')
+
   const start = DateTime.fromISO(selectInfo.startStr)
-  const end = DateTime.fromISO(selectInfo.endStr)
+  const end = isAllDay
+      ? DateTime.fromISO(selectInfo.endStr).minus({ days: 1 })
+      : DateTime.fromISO(selectInfo.endStr)
 
   mode.value = 'create'
   editId.value = null
@@ -51,16 +55,13 @@ function handleDateSelect(selectInfo: DateSelectArg) {
     price: 0,
     date_start: start.toFormat('yyyy-MM-dd'),
     date_end: end.toFormat('yyyy-MM-dd'),
-    time_start: selectInfo.startStr.includes('T')
-        ? start.toFormat('HH:mm')
-        : '',
-    time_end: selectInfo.endStr.includes('T')
-        ? end.toFormat('HH:mm')
-        : '',
+    time_start: isAllDay ? '00:00' : start.toFormat('HH:mm'),
+    time_end: isAllDay ? '01:00' : end.toFormat('HH:mm'),
   }
 
   isFormModalOpen.value = true
 }
+
 
 function handleEventClick(clickInfo: EventClickArg) {
   const event = clickInfo.event
@@ -165,7 +166,6 @@ const calendarOptions = ref<{
   </FullCalendar>
 
   <ScheduleFormModal
-    v-if="formModel"
     v-model="isFormModalOpen"
     :model="formModel"
     :mode="mode"

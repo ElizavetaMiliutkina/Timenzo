@@ -21,6 +21,7 @@ export interface EventDataCreate {
     time_start: string;
     datetime?: string;
     duration?: string;
+    currency_id?: number | null
 }
 export interface ScheduleDataProps {
     date_start: string;

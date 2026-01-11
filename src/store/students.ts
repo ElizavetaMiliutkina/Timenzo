@@ -31,6 +31,16 @@ export const useStudentStore = defineStore('calendar', {
                 return null
             }
         },
+        async deleteStudent(student_id: string | number) {
+            try {
+                const response = await axios.delete(`/student/${student_id}`)
+                await this.getStudents()
+                return response.data
+            } catch (error) {
+                console.error('Error create student:', error)
+                return null
+            }
+        },
 
     }
 })

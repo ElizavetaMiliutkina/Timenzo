@@ -25,9 +25,19 @@ defineProps<{
       title="Students"
       :rows="rows"
       :columns="columns"
-      row-key="name"
+      row-key="id"
       color="amber"
       :pagination="{ rowsPerPage: 10 }"
-    />
+    >
+      <template
+        v-for="(_, slot) in $slots"
+        #[slot]="scope"
+      >
+        <slot
+          :name="slot"
+          v-bind="scope"
+        />
+      </template>
+    </q-table>
   </div>
 </template>

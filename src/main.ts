@@ -3,7 +3,7 @@ import './style.css';
 import App from './App.vue';
 import router from '@/router/index.js';
 import { createPinia } from 'pinia';
-import { Quasar, Dark } from 'quasar';
+import { Quasar, Dark, Dialog } from 'quasar';
 import 'quasar/src/css/index.sass';
 import '@quasar/extras/material-icons/material-icons.css';
 
@@ -13,7 +13,7 @@ app.use(router);
 app.use(createPinia());
 
 app.use(Quasar, {
-    plugins: { Dark },
+    plugins: { Dark, Dialog },
 });
 
 Dark.set(false);

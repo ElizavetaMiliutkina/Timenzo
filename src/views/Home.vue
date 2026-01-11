@@ -4,6 +4,10 @@ import Table from "@/components/table/Table.vue";
 import AddStudentModal from "@/components/modals/AddStudentModal.vue";
 import {useStudentStore} from "@/store/students";
 
+import { useQuasar } from 'quasar'
+
+const $q = useQuasar()
+
 const studentStore = useStudentStore()
 const student = ref(null)
 const openStudentModal = ref<boolean>(false)
@@ -24,10 +28,8 @@ const fetchStudents = () => {
     studentStore.getStudents()
   }
 }
-console.log(studentStore.students, 'studentStore.students')
+
 fetchStudents()
-
-
 
 const columns = [
   {
@@ -43,7 +45,25 @@ const columns = [
   { name: 'timezone', label: 'Timezone', align: 'left', field: row => row.timezone, format: val => `${val.label}`,
      sortable: true },
   { name: 'comment', label: 'Comment', align: 'left', field: 'comment' },
+  {
+    name: 'actions',
+    label: 'Actions',
+    align: 'center',
+    headerStyle: 'width: 1%;',
+    style: 'width: 1%; white-space: nowrap;',
+  },
 ]
+
+const deleteStudent = (row: any) => {
+  $q.dialog({
+    title: 'Confirm',
+    message: `Are you sure you want to delete ${row.name} student?`,
+    cancel: true,
+    persistent: true,
+  }).onOk(async () => {
+    await studentStore.deleteStudent(row.id)
+  })
+}
 </script>
 
 <template>
@@ -60,7 +80,20 @@ const columns = [
     <Table
       :columns="columns"
       :rows="students"
-    />
+    >
+      <template #body-cell-actions="{ row }">
+        <q-td style="text-align: center">
+          <q-btn
+            icon="delete"
+            color="negative"
+            flat
+            round
+            size="sm"
+            @click="deleteStudent(row)"
+          />
+        </q-td>
+      </template>
+    </Table>
   </div>
 </template>
 
