@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import {EventData, GraphData} from '@/types/calendar'
+import {EventDataCreate, EventData, GraphData} from '@/types/calendar'
 import { Notify } from 'quasar'
 
 import axios from "@/plugins/axios";
