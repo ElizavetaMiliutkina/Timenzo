@@ -2,6 +2,8 @@
 import {defineEmits, defineProps, ref, watch} from "vue";
 import { EventData } from "@/types/calendar";
 import { DateTime } from 'luxon';
+import {useDictionariesStore} from "@/store/dictionaries";
+import {storeToRefs} from "pinia";
 
 const props = defineProps<{
   modelValue: boolean;
@@ -15,6 +17,11 @@ const isOpen = ref(false)
 watch(() => props.modelValue, val => {
   isOpen.value = val
 })
+
+const dictionariesStore = useDictionariesStore()
+const { currencies } = storeToRefs(dictionariesStore)
+
+dictionariesStore.fetchCurrencies()
 
 function closeModal() {
   emit('unselect')
@@ -32,6 +39,7 @@ const EditEvent = () => {
       title: props.event.title,
       description: props.event.extendedProps.description,
       price: props.event.extendedProps.price,
+      currency_id: props.event.extendedProps.currency_id,
       date_start: DateTime.fromISO(props.event.start).toFormat('yyyy-MM-dd'),
       date_end: DateTime.fromISO(props.event.end).toFormat('yyyy-MM-dd'),
       time_start: DateTime.fromISO(props.event.start).toFormat('HH:mm'),
@@ -60,7 +68,7 @@ const EditEvent = () => {
         {{ formatTime(event.start) }} - {{ formatTime(event.end) }}
       </div>
       <div class="card-info__price">
-        Price: {{ event.extendedProps.price }}
+        Price: {{ event.extendedProps.price }} {{ currencies.find((currency)=> currency.id === event.extendedProps.currency_id).symbol }}
       </div>
       <q-card-actions align="right">
         <q-btn

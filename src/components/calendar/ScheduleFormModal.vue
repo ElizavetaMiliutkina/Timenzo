@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
+import { storeToRefs } from 'pinia'
 import type { QForm } from 'quasar'
 import { DateTime, Duration } from 'luxon'
 import { EventDataCreate } from '@/types/calendar'
-import { Currency } from '@/types/dictionaries'
-import { getCurrencies } from "@/services/dictionaries";
 
 import TimeZoneSlider from '@/components/TimeZoneSlider.vue'
 import TimePeriod from '@/components/TimePeriod.vue'
 
+import { useDictionariesStore } from '@/store/dictionaries'
+
 const props = defineProps<{
   modelValue: boolean
-  model: EventDataCreate
+  model: EventDataCreate | null
   mode: 'create' | 'edit'
 }>()
 
@@ -25,19 +26,18 @@ const formRef = ref<QForm | null>(null)
 const form = ref<EventDataCreate>({
   title: '',
   price: 0,
+  currency_id: 1,
   description: '',
   date_start: '',
   date_end: '',
   time_start: '',
   time_end: '',
 })
-const currencies = ref<Currency[]>([])
 
-const getCurrenciesList = async () => {
-  const response = await getCurrencies()
-  currencies.value = response
-}
-getCurrenciesList()
+const dictionariesStore = useDictionariesStore()
+const { currencies } = storeToRefs(dictionariesStore)
+
+dictionariesStore.fetchCurrencies()
 
 const dialogModel = computed({
   get: () => props.modelValue,

@@ -35,7 +35,7 @@ export const useCalendarStore = defineStore('calendar', {
                 return []
             }
         },
-        async patchEvent(payload: EventData, id: number | string): Promise<EventData | null> {
+        async patchEvent(payload: EventDataCreate, id: number | string): Promise<EventData | null> {
             try {
                 const response = await axios.patch<EventData>(`/events/${id}`, payload)
                 this.events[this.events.findIndex((event) => event.id === response.data.id)] = response.data

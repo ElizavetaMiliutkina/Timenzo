@@ -53,6 +53,7 @@ function handleDateSelect(selectInfo: DateSelectArg) {
     title: '',
     description: '',
     price: 0,
+    currency_id: 1,
     date_start: start.toFormat('yyyy-MM-dd'),
     date_end: end.toFormat('yyyy-MM-dd'),
     time_start: isAllDay ? '00:00' : start.toFormat('HH:mm'),
@@ -71,7 +72,12 @@ function handleEventClick(clickInfo: EventClickArg) {
     title: event.title,
     start: event.startStr,
     end: event.endStr,
-    extendedProps: { ...event.extendedProps },
+    extendedProps: {
+      price: Number(event.extendedProps.price ?? 0),
+      description: String(event.extendedProps.description ?? ''),
+      currency_id: Number(event.extendedProps.currency_id ?? 1),
+      completed: Boolean(event.extendedProps.completed ?? false),
+    },
   }
 
   isEventModalOpen.value = true
@@ -92,6 +98,7 @@ async function onSubmitForm(data: EventDataCreate) {
   if (mode.value === 'create') {
     await postEvent(data)
   } else if (editId.value !== null) {
+
     await calendarStore.patchEvent(data, editId.value)
   }
 

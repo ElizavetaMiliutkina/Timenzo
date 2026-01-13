@@ -6,6 +6,7 @@ export interface EventData {
     extendedProps: {
         price: number
         description: string
+        currency_id: number
         completed: boolean
     }
 }
@@ -21,14 +22,7 @@ export interface EventDataCreate {
     time_start: string;
     datetime?: string;
     duration?: string;
-    currency_id?: number | null
-}
-export interface ScheduleDataProps {
-    date_start: string;
-    date_end: string;
-    time_end: string;
-    time_start: string;
-    duration: number;
+    currency_id: number
 }
 
 export interface CalendarEvent {
