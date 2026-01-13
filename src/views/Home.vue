@@ -4,14 +4,22 @@ import Table from "@/components/table/Table.vue";
 import AddStudentModal from "@/components/modals/AddStudentModal.vue";
 import {useStudentStore} from "@/store/students";
 
-import { useQuasar } from 'quasar'
+import { useQuasar, QTableColumn } from 'quasar'
+import {useDictionariesStore} from "@/store/dictionaries";
+import {storeToRefs} from "pinia";
+import {Student, Timezone} from "@/types/students";
 
 const $q = useQuasar()
 
 const studentStore = useStudentStore()
 const student = ref(null)
 const openStudentModal = ref<boolean>(false)
-const students = ref([])
+const students = ref<Student[]>([])
+
+const dictionariesStore = useDictionariesStore()
+const { currencies } = storeToRefs(dictionariesStore)
+
+dictionariesStore.fetchCurrencies()
 
 watch(
     () => studentStore.students,
@@ -31,30 +39,55 @@ const fetchStudents = () => {
 
 fetchStudents()
 
-const columns = [
+const columns: QTableColumn[] = [
   {
     name: 'name',
     required: true,
     label: 'Name',
     align: 'left',
-    field: row => row.name,
-    format: val => `${val}`,
-    sortable: true
+    field: (row: Student) => row.name,
+    format: (val: unknown) => String(val),
+    sortable: true,
   },
-  { name: 'price', align: 'left', label: 'Price', field: 'price', sortable: true },
-  { name: 'timezone', label: 'Timezone', align: 'left', field: row => row.timezone, format: val => `${val.label}`,
-     sortable: true },
-  { name: 'comment', label: 'Comment', align: 'left', field: 'comment' },
+  {
+    name: 'price',
+    label: 'Price',
+    align: 'left',
+    field: 'price',
+    sortable: true,
+  },
+  {
+    name: 'currency_id',
+    label: 'Currency',
+    align: 'left',
+    field: (row: Student) =>
+        currencies.value.find((c) => c.id === row.currency_id)?.symbol ?? '',
+  },
+  {
+    name: 'timezone',
+    label: 'Timezone',
+    align: 'left',
+    field: (row: Student) => row.timezone,
+    format: (val: unknown) => (val as Timezone)?.label ?? '',
+    sortable: true,
+  },
+  {
+    name: 'comment',
+    label: 'Comment',
+    align: 'left',
+    field: 'comment',
+  },
   {
     name: 'actions',
     label: 'Actions',
     align: 'center',
-    headerStyle: 'width: 1%;',
+    field: () => null,
+    headerStyle: 'width: 1%',
     style: 'width: 1%; white-space: nowrap;',
   },
 ]
 
-const deleteStudent = (row: any) => {
+const deleteStudent = (row: Student) => {
   $q.dialog({
     title: 'Confirm',
     message: `Are you sure you want to delete ${row.name} student?`,

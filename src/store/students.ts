@@ -1,19 +1,19 @@
 import { defineStore } from 'pinia'
-import {StudentFormData} from '@/types/students'
+import {StudentFormData, Student} from '@/types/students'
 
 import axios from "@/plugins/axios";
 
 
 export const useStudentStore = defineStore('calendar', {
     state: (): {
-        students: StudentFormData[]
+        students: Student[]
     } => ({
         students: [],
     }),
     actions: {
-        async getStudents(): Promise<StudentFormData[]> {
+        async getStudents(): Promise<Student[]> {
             try {
-                const response = await axios.get<StudentFormData[]>('/students')
+                const response = await axios.get<Student[]>('/students')
                 this.students = response.data
                 return response.data
             } catch (error) {

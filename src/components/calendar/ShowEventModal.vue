@@ -4,6 +4,7 @@ import { EventData } from "@/types/calendar";
 import { DateTime } from 'luxon';
 import {useDictionariesStore} from "@/store/dictionaries";
 import {storeToRefs} from "pinia";
+import {Currency} from "@/types/dictionaries";
 
 const props = defineProps<{
   modelValue: boolean;
@@ -68,7 +69,7 @@ const EditEvent = () => {
         {{ formatTime(event.start) }} - {{ formatTime(event.end) }}
       </div>
       <div class="card-info__price">
-        Price: {{ event.extendedProps.price }} {{ currencies.find((currency)=> currency.id === event.extendedProps.currency_id).symbol }}
+        Price: {{ event.extendedProps.price }} {{ currencies.find((currency: Currency)=> currency.id === event.extendedProps.currency_id).symbol }}
       </div>
       <q-card-actions align="right">
         <q-btn

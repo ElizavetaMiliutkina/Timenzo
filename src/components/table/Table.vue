@@ -1,17 +1,20 @@
 <script setup lang="ts">
+import { QTableColumn } from 'quasar'
 
-interface Column {
-  name: string
-  label: string
-  field: string | ((row: any) => any)
-  align?: string
-  format?: (val: any) => string
-  sortable?: boolean
-  required?: boolean
-}
+// export interface Column<T> {
+//   name: string
+//   label: string
+//   field?: string | ((row: T) => unknown)
+//   align?: 'left' | 'right' | 'center'
+//   format?: (val: unknown, row?: T) => string
+//   sortable?: boolean
+//   required?: boolean
+//   headerStyle?: string
+//   style?: string
+// }
 
 defineProps<{
-  columns: Column[]
+  columns: QTableColumn[]
   rows: any[]
 }>()
 

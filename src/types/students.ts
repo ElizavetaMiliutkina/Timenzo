@@ -2,11 +2,12 @@ export interface Student {
     id: number
     name: string
     price: number
-    timezone: number
+    timezone: Timezone
+    currency_id: number
     commit: string
 }
 
-interface Timezone {
+export interface Timezone {
     id: number
     label: string
     lat: number
