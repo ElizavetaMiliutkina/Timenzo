@@ -181,8 +181,11 @@ function formatedDateTime(
             :rules="[val => !!val || 'Enter Title']"
           />
 
-          <div class="row q-col-gutter-md">
-            <div class="col-7">
+          <div
+            class="row"
+            style="column-gap: 16px"
+          >
+            <div class="col">
               <q-input
                 v-model="form.price"
                 filled
@@ -195,7 +198,7 @@ function formatedDateTime(
               />
             </div>
 
-            <div class="col-5">
+            <div class="col-auto">
               <q-select
                 v-model="form.currency_id"
                 filled

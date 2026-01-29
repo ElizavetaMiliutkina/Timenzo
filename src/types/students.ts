@@ -24,4 +24,5 @@ export type StudentFormData = {
     price: number
     comment: string
     timezone: Timezone | null
+    currency_id: number
 }
