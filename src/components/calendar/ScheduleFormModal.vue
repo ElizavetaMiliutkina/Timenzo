@@ -9,6 +9,14 @@ import TimeZoneSlider from '@/components/TimeZoneSlider.vue'
 import TimePeriod from '@/components/TimePeriod.vue'
 
 import { useDictionariesStore } from '@/store/dictionaries'
+import {useStudentStore} from "@/store/students";
+import {Student} from "@/types/students";
+
+const studentStore = useStudentStore()
+const { students } = storeToRefs(studentStore)
+const selectedStudent = ref<Student | null>(null)
+const studentTimezone = ref('')
+const browserTimezone = DateTime.local().zoneName
 
 const props = defineProps<{
   modelValue: boolean
@@ -134,6 +142,18 @@ function closeModal() {
   emit('update:modelValue', false)
 }
 
+const fetchStudents = async () => {
+  if (!students.value.length) {
+    await studentStore.getStudents()
+  }
+}
+
+fetchStudents()
+
+// function selectStudent() {
+//
+// }
+
 function formatedDateTime(
     time: string,
     date: string,
@@ -154,9 +174,53 @@ function formatedDateTime(
 
   return dateTime.toFormat('MMM dd HH:mm')
 }
+
+watch(selectedStudent, (student) => {
+  if (!student) return
+
+  form.value.price = student.price
+  form.value.currency_id = student.currency_id
+
+  studentTimezone.value = student.timezone.timezone
+
+  // ⏰ если хочешь — автоподстановка времени
+  // например, сразу поставить старт на ближайший час
+  autoSetTimeByTimezone(student.timezone)
+})
+
+function autoSetTimeByTimezone(timezone: any) {
+  if (!timezone) return
+
+  // const now = DateTime.now().setZone(timezone.label)
+  //
+  // form.value.date_start = now.toFormat('yyyy-MM-dd')
+  // form.value.time_start = now.plus({ hours: 1 }).toFormat('HH:mm')
+  //
+  // calculateTimeEnd()
+}
+
+const browserTimeDisplay = computed(() => {
+  if (!form.value.time_start || !form.value.date_start) return ''
+
+  return DateTime.now()
+      .setZone(browserTimezone) // текущий час в таймзоне студента
+      .toFormat('HH:mm') // только часы и минуты
+})
+
+
+
+const studentTimeDisplay = computed(() => {
+  if (!studentTimezone.value) return ''
+
+  return DateTime.now()
+      .setZone(studentTimezone.value) // текущий час в таймзоне студента
+      .toFormat('HH:mm') // только часы и минуты
+})
+
 </script>
 
 <template>
+  <div>{{ studentTimezone }}</div>
   <q-dialog
     v-model="dialogModel"
     persistent
@@ -167,6 +231,25 @@ function formatedDateTime(
           New Schedule
         </div>
       </q-card-section>
+      <q-card-section>
+        <!--        <div class="text-h6">-->
+        <!--          Select Student-->
+        <!--        </div>-->
+        {{ selectedStudent }}
+        <q-select
+          v-model="selectedStudent"
+          filled
+          label="Student"
+          :options="students"
+          option-label="name"
+        />
+      </q-card-section>
+      <!--      <q-btn-->
+      <!--        flat-->
+      <!--        label="Select Student"-->
+      <!--        color="primary"-->
+      <!--        @click="selectStudent"-->
+      <!--      />-->
 
       <q-card-section>
         <q-form
@@ -274,8 +357,22 @@ function formatedDateTime(
               </template>
             </q-input>
           </div>
+          <div
+            class="row justify-between items-center q-mt-md text-weight-medium"
+          >
+            <div>
+              🖥 Your time:
+              <span class="text-primary">{{ browserTimeDisplay }}</span>
+            </div>
+
+            <div v-if="studentTimezone">
+              👤 Student time:
+              <span class="text-secondary">{{ studentTimeDisplay }}</span>
+            </div>
+          </div>
           <time-zone-slider
             :time="form.time_start"
+            :timezone="selectedStudent?.timezone?.timezone"
             @selected-time="selectedTime"
           />
           <div class="time-info-block">

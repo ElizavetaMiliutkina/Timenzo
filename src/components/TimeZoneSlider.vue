@@ -1,4 +1,5 @@
 <template>
+  {{ localTimeDisplay }}
   <q-card
     flat
     class="time-picker"
@@ -48,7 +49,7 @@
       >
         <q-btn
           flat
-          label="GMT +2:00"
+          :label="gmtLabel"
         />
         <span class="time">{{ gmtTimeDisplay }}</span>
       </div>
@@ -71,6 +72,10 @@ const props  = defineProps({
     type: String,
     default: '00:00',
   },
+  timezone: {
+    type: String,
+    default: '',
+  },
 })
 
 const emit = defineEmits(['selectedTime'])
@@ -78,9 +83,21 @@ const emit = defineEmits(['selectedTime'])
 const scrollWrapper = ref<HTMLElement | null>(null);
 const scrollTrack = ref<HTMLElement | null>(null);
 
-const offset = 2;
 const selectedIndex = ref(13);
 const isInitialized = ref(false);
+const browserTimezone = DateTime.local().zoneName
+
+console.log(browserTimezone, 'browserTimezone')
+
+const resolvedTimezone = computed(() => {
+  // если пришёл таймзон студента (например America/New_York)
+  if (props.timezone) {
+    return props.timezone
+  }
+
+  // fallback — таймзона браузера
+  return DateTime.local().zoneName
+})
 
 const getTimeIndex = (time: string): number => {
   const [hours, minutes] = time.split(':').map(Number);
@@ -98,19 +115,38 @@ const timeLabels = computed(() => {
   });
 });
 
+const gmtLabel = computed(() => {
+  const offsetMinutes = DateTime.now().setZone(resolvedTimezone.value).offset
+  const sign = offsetMinutes >= 0 ? '+' : '-'
+  const hours = Math.abs(offsetMinutes) / 60
+
+  return `GMT ${sign}${hours}:00`
+})
+
 const timeLabelsGmt = computed(() => {
-  const slotMinutes = props.slot * 60;
-  const totalSlots = Math.floor(24 * 60 / slotMinutes);
+  const slotMinutes = props.slot * 60
+  const totalSlots = Math.floor(24 * 60 / slotMinutes)
+
   return Array.from({ length: totalSlots }, (_, i) => {
-    const minutes = i * slotMinutes + offset * 60;
-    return DateTime.fromObject({ hour: 0, minute: 0 }).plus({ minutes }).toFormat('hh:mm');
-  });
-});
+    const minutes = i * slotMinutes
+
+    return DateTime
+        .fromObject({ hour: 0, minute: 0 }, { zone: resolvedTimezone.value })
+        .plus({ minutes })
+        .toUTC()
+        .toFormat('hh:mm')
+  })
+})
 
 const localTimeDisplay = computed(() => {
-  const minutes = selectedIndex.value * props.slot * 60;
-  return DateTime.fromObject({ hour: 0, minute: 0 }).plus({ minutes }).toFormat('hh:mm a');
-});
+  const minutes = selectedIndex.value * props.slot * 60
+
+  return DateTime
+      .local()              // ⬅️ БЕРЁМ СЕГОДНЯ И ТАЙМЗОНУ БРАУЗЕРА
+      .startOf('day')       // ⬅️ ПОЛНОЧЬ СЕГОДНЯ
+      .plus({ minutes })    // ⬅️ СЛОТ
+      .toFormat('hh:mm a')
+})
 
 watch(
     selectedIndex, debounce((val) => {
@@ -119,10 +155,17 @@ watch(
       emit('selectedTime', time);
     }, 300)
 )
+
 const gmtTimeDisplay = computed(() => {
-  const minutes = selectedIndex.value * props.slot * 60 + offset * 60;
-  return DateTime.fromObject({ hour: 0, minute: 0 }).plus({ minutes }).toFormat('hh:mm a');
-});
+  const minutes = selectedIndex.value * props.slot * 60
+
+  return DateTime
+      .fromObject({ hour: 0, minute: 0 }, { zone: resolvedTimezone.value })
+      .plus({ minutes })
+      .toUTC()
+      .toFormat('hh:mm a')
+})
+
 
 //Select time by click
 const scrollToIndex = (index: number) => {

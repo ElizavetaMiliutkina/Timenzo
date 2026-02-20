@@ -4,7 +4,7 @@ import {StudentFormData, Student} from '@/types/students'
 import axios from "@/plugins/axios";
 
 
-export const useStudentStore = defineStore('calendar', {
+export const useStudentStore = defineStore('students', {
     state: (): {
         students: Student[]
     } => ({

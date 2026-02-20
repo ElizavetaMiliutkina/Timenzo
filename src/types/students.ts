@@ -12,6 +12,7 @@ export interface Timezone {
     label: string
     lat: number
     lon: number
+    timezone: string
 }
 
 // export type StudentCreate = Omit<Student, 'id' | 'timezone_id'> & {
