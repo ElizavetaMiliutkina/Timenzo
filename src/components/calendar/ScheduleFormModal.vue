@@ -182,22 +182,7 @@ watch(selectedStudent, (student) => {
   form.value.currency_id = student.currency_id
 
   studentTimezone.value = student.timezone.timezone
-
-  // ⏰ если хочешь — автоподстановка времени
-  // например, сразу поставить старт на ближайший час
-  autoSetTimeByTimezone(student.timezone)
 })
-
-function autoSetTimeByTimezone(timezone: any) {
-  if (!timezone) return
-
-  // const now = DateTime.now().setZone(timezone.label)
-  //
-  // form.value.date_start = now.toFormat('yyyy-MM-dd')
-  // form.value.time_start = now.plus({ hours: 1 }).toFormat('HH:mm')
-  //
-  // calculateTimeEnd()
-}
 
 const browserTimeDisplay = computed(() => {
   if (!form.value.time_start || !form.value.date_start) return ''
@@ -207,14 +192,27 @@ const browserTimeDisplay = computed(() => {
       .toFormat('HH:mm') // только часы и минуты
 })
 
-
-
 const studentTimeDisplay = computed(() => {
   if (!studentTimezone.value) return ''
 
   return DateTime.now()
       .setZone(studentTimezone.value) // текущий час в таймзоне студента
       .toFormat('HH:mm') // только часы и минуты
+})
+
+const roundedBrowserTime = computed(() => {
+  const now = DateTime.now()
+  console.log(now,'now')
+  const minutes = now.minute
+  console.log(now.minute,'now.minute')
+  const roundedMinutes = Math.round(minutes / 30) * 30
+  console.log(roundedMinutes,'roundedMinutes')
+
+  const rounded = now
+      .set({ minute: 0, second: 0, millisecond: 0 })
+      .plus({ minutes: roundedMinutes })
+
+  return rounded.toFormat('HH:mm')
 })
 
 </script>
@@ -371,7 +369,7 @@ const studentTimeDisplay = computed(() => {
             </div>
           </div>
           <time-zone-slider
-            :time="form.time_start"
+            :time="roundedBrowserTime || form.time_start"
             :timezone="selectedStudent?.timezone?.timezone"
             @selected-time="selectedTime"
           />

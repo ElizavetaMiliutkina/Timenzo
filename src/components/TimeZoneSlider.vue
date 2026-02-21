@@ -15,7 +15,6 @@
         />
         <span class="time">{{ localTimeDisplay }}</span>
       </div>
-
       <div
         ref="scrollWrapper"
         class="time-picker__scroll-wrapper custom-scrollbar"
@@ -111,16 +110,19 @@ const timeLabels = computed(() => {
   const totalSlots = Math.floor(24 * 60 / slotMinutes); // Total slots in a day
   return Array.from({ length: totalSlots }, (_, i) => {
     const minutes = i * slotMinutes;
-    return DateTime.fromObject({ hour: 0, minute: 0 }).plus({ minutes }).toFormat('hh:mm');
+    return DateTime.fromObject({ hour: 0, minute: 0 }).plus({ minutes }).toFormat('HH:mm');
   });
 });
 
 const gmtLabel = computed(() => {
-  const offsetMinutes = DateTime.now().setZone(resolvedTimezone.value).offset
-  const sign = offsetMinutes >= 0 ? '+' : '-'
-  const hours = Math.abs(offsetMinutes) / 60
+  const studentOffset = DateTime.now().setZone(resolvedTimezone.value).offset
+  const browserOffset = DateTime.now().setZone(browserTimezone).offset
 
-  return `GMT ${sign}${hours}:00`
+  const diffMinutes = studentOffset - browserOffset
+  const sign = diffMinutes >= 0 ? '+' : '-'
+  const hours = Math.abs(diffMinutes) / 60
+
+  return `Student ${sign}${hours}h`
 })
 
 const timeLabelsGmt = computed(() => {
@@ -131,10 +133,11 @@ const timeLabelsGmt = computed(() => {
     const minutes = i * slotMinutes
 
     return DateTime
-        .fromObject({ hour: 0, minute: 0 }, { zone: resolvedTimezone.value })
+        .local()
+        .startOf('day')
         .plus({ minutes })
-        .toUTC()
-        .toFormat('hh:mm')
+        .setZone(resolvedTimezone.value)
+        .toFormat('HH:mm')
   })
 })
 
@@ -145,7 +148,7 @@ const localTimeDisplay = computed(() => {
       .local()              // ⬅️ БЕРЁМ СЕГОДНЯ И ТАЙМЗОНУ БРАУЗЕРА
       .startOf('day')       // ⬅️ ПОЛНОЧЬ СЕГОДНЯ
       .plus({ minutes })    // ⬅️ СЛОТ
-      .toFormat('hh:mm a')
+      .toFormat('HH:mm')
 })
 
 watch(
@@ -160,10 +163,11 @@ const gmtTimeDisplay = computed(() => {
   const minutes = selectedIndex.value * props.slot * 60
 
   return DateTime
-      .fromObject({ hour: 0, minute: 0 }, { zone: resolvedTimezone.value })
+      .local()
+      .startOf('day')
       .plus({ minutes })
-      .toUTC()
-      .toFormat('hh:mm a')
+      .setZone(resolvedTimezone.value)
+      .toFormat('HH:mm')
 })
 
 
