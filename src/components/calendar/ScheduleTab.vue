@@ -4,6 +4,7 @@ import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
+import listPlugin from '@fullcalendar/list'
 import {
   DateSelectArg,
   EventClickArg,
@@ -150,11 +151,11 @@ const calendarOptions = ref<{
       failureCallback: (error: any) => void
   ) => void
 }>({
-  plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
+  plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
   headerToolbar: {
     left: 'prev,next today',
     center: 'title',
-    right: 'dayGridMonth,timeGridWeek,timeGridDay',
+    right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek',
   },
   initialView: 'dayGridMonth',
   initialEvents: [],
@@ -214,3 +215,8 @@ b {
   margin-right: 3px;
 }
 </style>
+<!--<style>-->
+<!--.fc-timegrid-slot-lane:empty {-->
+<!--  display: none;-->
+<!--}-->
+<!--</style>-->
