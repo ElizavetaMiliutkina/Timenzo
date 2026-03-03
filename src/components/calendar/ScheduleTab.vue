@@ -96,6 +96,23 @@ function editEventForm(data: EventDataCreate, id: number) {
   isFormModalOpen.value = true
 }
 
+async function deleteEvent(id: number) {
+  try {
+    await calendarStore.deleteEvent(id)
+
+    // закрываем show modal
+    isEventModalOpen.value = false
+    selectedEvent.value = null
+
+    // обновляем календарь
+    const calendarApi = calendarRef.value?.getApi()
+    calendarApi?.refetchEvents()
+
+  } catch (error) {
+    console.error('Delete failed:', error)
+  }
+}
+
 /* ===================== FORM SUBMIT ===================== */
 
 async function onSubmitForm(data: EventDataCreate) {
@@ -188,6 +205,7 @@ const calendarOptions = ref<{
     :event="selectedEvent"
     @unselect="selectedEvent = null"
     @edit="editEventForm"
+    @delete="deleteEvent"
   />
 </template>
 

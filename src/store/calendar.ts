@@ -64,6 +64,16 @@ export const useCalendarStore = defineStore('calendar', {
                 return []
             }
         },
+        async deleteEvent(id: string | number) {
+            try {
+                const response = await axios.delete(`/events/${id}`)
+                await this.reloadEvents()
+                return response
+            } catch (error) {
+                console.error('Error fetching events:', error)
+                return []
+            }
+        },
         async incomeGraph(period: number): Promise<GraphData> {
             try {
                 const response = await axios.get<GraphData>(`/income/graph?period=${period}`)

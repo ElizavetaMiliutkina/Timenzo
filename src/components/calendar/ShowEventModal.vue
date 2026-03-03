@@ -11,7 +11,7 @@ const props = defineProps<{
   event: EventData | null;
 }>()
 
-const emit = defineEmits(['update:modelValue', 'edit', 'unselect'])
+const emit = defineEmits(['update:modelValue', 'edit', 'unselect', 'delete'])
 
 const isOpen = ref(false)
 
@@ -71,7 +71,7 @@ const EditEvent = () => {
         {{ formatTime(event.start) }} - {{ formatTime(event.end) }}
       </div>
       <div class="card-info__price">
-        Price: {{ event.extendedProps.price }} {{ currencies.find((currency: Currency)=> currency.id === event.extendedProps.currency_id).symbol }}
+        Price: {{ event.extendedProps.price }} {{ currencies.find((currency: Currency)=> currency.id === event?.extendedProps.currency_id)?.symbol }}
       </div>
       <q-card-actions align="right">
         <q-btn
@@ -79,6 +79,14 @@ const EditEvent = () => {
           label="Cancel"
           color="primary"
           @click="closeModal"
+        />
+        <q-btn
+          flat
+          label="Delete"
+          color="danger"
+          @click="() => {
+            emit('delete', event?.id)
+          }"
         />
         <q-btn
           label="Edit"

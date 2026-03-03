@@ -64,7 +64,7 @@ watch(
     () => props.model,
     (model) => {
       if (!model) return
-      if(!model.student) selectStudentMode.value = false
+      if(!model.student && props.mode === 'edit') selectStudentMode.value = false
       selectedStudent.value = model.student || null
       studentTimezone.value = model.timezone || null
       form.value = { ...model }
@@ -222,6 +222,10 @@ const roundedBrowserTime = computed(() => {
   return rounded.toFormat('HH:mm')
 })
 
+watch(
+    () => [form.value.date_start, form.value.time_start],
+    () => calculateTimeEnd()
+)
 </script>
 
 <template>
@@ -234,7 +238,6 @@ const roundedBrowserTime = computed(() => {
         <div class="text-h6">
           New Schedule
         </div>
-        {{ model }}
       </q-card-section>
       <div class="q-pa-md">
         <q-chip
@@ -267,7 +270,6 @@ const roundedBrowserTime = computed(() => {
           Select student
         </q-chip>
       </div>
-      {{ selectedStudent }}
       <q-card-section>
         <q-select
           v-if="selectStudentMode"
@@ -282,8 +284,6 @@ const roundedBrowserTime = computed(() => {
           v-model="studentTimezone"
         />
       </q-card-section>
-
-      {{ studentTimezone }}
       <q-card-section>
         <q-form
           ref="formRef"
@@ -357,6 +357,7 @@ const roundedBrowserTime = computed(() => {
                       <q-date
                         v-model="form.date_start"
                         v-close-popup
+                        mask="YYYY-MM-DD"
                       />
                     </div>
                   </q-popup-proxy>
@@ -367,6 +368,7 @@ const roundedBrowserTime = computed(() => {
             <q-input
               v-model="form.date_end"
               label="Select End Date"
+              disable
               readonly
             >
               <template #append>
@@ -383,6 +385,7 @@ const roundedBrowserTime = computed(() => {
                       <q-date
                         v-model="form.date_end"
                         v-close-popup
+                        mask="YYYY-MM-DD"
                       />
                     </div>
                   </q-popup-proxy>
