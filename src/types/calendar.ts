@@ -1,3 +1,5 @@
+import {Student, Timezone} from "@/types/students";
+
 export interface EventData {
     id: string
     title: string
@@ -7,6 +9,8 @@ export interface EventData {
         price: number
         description: string
         currency_id: number
+        student: Student
+        timezone: Timezone
         completed: boolean
     }
 }
@@ -22,7 +26,11 @@ export interface EventDataCreate {
     time_start: string;
     datetime?: string;
     duration?: string;
-    currency_id: number
+    currency_id: number;
+    student_id?: number | null;
+    timezone_id?: number | null;
+    student?: Student | null;
+    timezone?: Timezone | null;
 }
 
 export interface CalendarEvent {

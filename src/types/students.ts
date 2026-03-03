@@ -4,7 +4,7 @@ export interface Student {
     price: number
     timezone: Timezone
     currency_id: number
-    commit: string
+    commit?: string
 }
 
 export interface Timezone {

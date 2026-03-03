@@ -56,6 +56,8 @@ function handleDateSelect(selectInfo: DateSelectArg) {
     currency_id: 1,
     date_start: start.toFormat('yyyy-MM-dd'),
     date_end: end.toFormat('yyyy-MM-dd'),
+    timezone_id: null,
+    student_id: null,
     time_start: isAllDay ? '00:00' : start.toFormat('HH:mm'),
     time_end: isAllDay ? '01:00' : end.toFormat('HH:mm'),
   }
@@ -77,6 +79,8 @@ function handleEventClick(clickInfo: EventClickArg) {
       description: String(event.extendedProps.description ?? ''),
       currency_id: Number(event.extendedProps.currency_id ?? 1),
       completed: Boolean(event.extendedProps.completed ?? false),
+      student: event.extendedProps.student ?? null,
+      timezone: event.extendedProps.timezone ?? null,
     },
   }
 

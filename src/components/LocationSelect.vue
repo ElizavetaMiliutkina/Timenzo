@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { getLocations } from "@/services/dictionaries";
 import debounce from 'lodash/debounce'
 import type {LocationOption} from "@/types/location"
@@ -13,6 +13,14 @@ const emit = defineEmits(['update:modelValue'])
 const searchQuery = ref<string>('');
 const locationSuggestions = ref<LocationOption[]>([]);
 const selectedLocation = ref<LocationOption | null>(null);
+
+watch(
+    () => props.modelValue,
+    (val) => {
+      selectedLocation.value = val
+    },
+    { immediate: true }
+)
 
 const fetchLocations = debounce(async (query: string) => {
   if (query.length < 2) {

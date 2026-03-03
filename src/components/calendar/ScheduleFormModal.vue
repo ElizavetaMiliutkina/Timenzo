@@ -10,13 +10,15 @@ import TimePeriod from '@/components/TimePeriod.vue'
 
 import { useDictionariesStore } from '@/store/dictionaries'
 import {useStudentStore} from "@/store/students";
-import {Student} from "@/types/students";
+import {Student, Timezone} from "@/types/students";
+import LocationSelect from "@/components/LocationSelect.vue";
 
 const studentStore = useStudentStore()
 const { students } = storeToRefs(studentStore)
 const selectedStudent = ref<Student | null>(null)
-const studentTimezone = ref('')
+const studentTimezone = ref<Timezone|null>(null)
 const browserTimezone = DateTime.local().zoneName
+const selectStudentMode = ref(true)
 
 const props = defineProps<{
   modelValue: boolean
@@ -39,6 +41,8 @@ const form = ref<EventDataCreate>({
   date_start: '',
   date_end: '',
   time_start: '',
+  student_id: null,
+  timezone_id: null,
   time_end: '',
 })
 
@@ -60,6 +64,9 @@ watch(
     () => props.model,
     (model) => {
       if (!model) return
+      if(!model.student) selectStudentMode.value = false
+      selectedStudent.value = model.student || null
+      studentTimezone.value = model.timezone || null
       form.value = { ...model }
       syncDurationFromForm()
     },
@@ -133,6 +140,8 @@ async function onSubmit() {
     price: Number(form.value.price),
     time_start: form.value.time_start || '00:00',
     time_end: form.value.time_end || '00:00',
+    timezone_id: studentTimezone.value?.id || null,
+    student_id: selectedStudent.value?.id || null,
   })
 
   closeModal()
@@ -175,13 +184,14 @@ function formatedDateTime(
   return dateTime.toFormat('MMM dd HH:mm')
 }
 
-watch(selectedStudent, (student) => {
+watch(selectedStudent, (student, oldStudent) => {
+  if (props.mode === 'edit' && !oldStudent) return
+
   if (!student) return
 
   form.value.price = student.price
   form.value.currency_id = student.currency_id
-
-  studentTimezone.value = student.timezone.timezone
+  studentTimezone.value = student.timezone
 })
 
 const browserTimeDisplay = computed(() => {
@@ -193,20 +203,17 @@ const browserTimeDisplay = computed(() => {
 })
 
 const studentTimeDisplay = computed(() => {
-  if (!studentTimezone.value) return ''
+  if (!studentTimezone.value?.timezone) return ''
 
   return DateTime.now()
-      .setZone(studentTimezone.value) // текущий час в таймзоне студента
+      .setZone(studentTimezone.value?.timezone) // текущий час в таймзоне студента
       .toFormat('HH:mm') // только часы и минуты
 })
 
 const roundedBrowserTime = computed(() => {
   const now = DateTime.now()
-  console.log(now,'now')
   const minutes = now.minute
-  console.log(now.minute,'now.minute')
   const roundedMinutes = Math.round(minutes / 30) * 30
-  console.log(roundedMinutes,'roundedMinutes')
 
   const rounded = now
       .set({ minute: 0, second: 0, millisecond: 0 })
@@ -218,7 +225,6 @@ const roundedBrowserTime = computed(() => {
 </script>
 
 <template>
-  <div>{{ studentTimezone }}</div>
   <q-dialog
     v-model="dialogModel"
     persistent
@@ -228,27 +234,56 @@ const roundedBrowserTime = computed(() => {
         <div class="text-h6">
           New Schedule
         </div>
+        {{ model }}
       </q-card-section>
+      <div class="q-pa-md">
+        <q-chip
+          v-if="selectStudentMode"
+          outline
+          clickable
+          color="primary"
+          class="cursor-pointer"
+          text-color="white"
+          @click="
+            studentTimezone = null;
+            selectStudentMode = false
+          "
+        >
+          Select timezone
+        </q-chip>
+
+        <q-chip
+          v-else
+          outline
+          clickable
+          color="primary"
+          class="cursor-pointer"
+          text-color="white"
+          @click="
+            selectedStudent = null;
+            selectStudentMode = true
+          "
+        >
+          Select student
+        </q-chip>
+      </div>
+      {{ selectedStudent }}
       <q-card-section>
-        <!--        <div class="text-h6">-->
-        <!--          Select Student-->
-        <!--        </div>-->
-        {{ selectedStudent }}
         <q-select
+          v-if="selectStudentMode"
           v-model="selectedStudent"
           filled
           label="Student"
           :options="students"
           option-label="name"
         />
+        <location-select
+          v-else
+          v-model="studentTimezone"
+        />
       </q-card-section>
-      <!--      <q-btn-->
-      <!--        flat-->
-      <!--        label="Select Student"-->
-      <!--        color="primary"-->
-      <!--        @click="selectStudent"-->
-      <!--      />-->
 
+      {{ studentTimezone }}
       <q-card-section>
         <q-form
           ref="formRef"
@@ -369,8 +404,9 @@ const roundedBrowserTime = computed(() => {
             </div>
           </div>
           <time-zone-slider
+            :key="studentTimezone?.id"
             :time="roundedBrowserTime || form.time_start"
-            :timezone="selectedStudent?.timezone?.timezone"
+            :timezone="studentTimezone?.timezone"
             @selected-time="selectedTime"
           />
           <div class="time-info-block">

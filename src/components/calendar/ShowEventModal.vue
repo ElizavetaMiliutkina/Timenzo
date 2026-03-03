@@ -41,6 +41,8 @@ const EditEvent = () => {
       description: props.event.extendedProps.description,
       price: props.event.extendedProps.price,
       currency_id: props.event.extendedProps.currency_id,
+      student: props.event.extendedProps.student,
+      timezone: props.event.extendedProps.timezone,
       date_start: DateTime.fromISO(props.event.start).toFormat('yyyy-MM-dd'),
       date_end: DateTime.fromISO(props.event.end).toFormat('yyyy-MM-dd'),
       time_start: DateTime.fromISO(props.event.start).toFormat('HH:mm'),

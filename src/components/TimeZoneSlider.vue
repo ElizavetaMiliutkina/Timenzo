@@ -1,5 +1,4 @@
 <template>
-  {{ localTimeDisplay }}
   <q-card
     flat
     class="time-picker"
