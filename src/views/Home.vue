@@ -7,14 +7,14 @@ import {useStudentStore} from "@/store/students";
 import { useQuasar, QTableColumn } from 'quasar'
 import {useDictionariesStore} from "@/store/dictionaries";
 import {storeToRefs} from "pinia";
-import {Student, Timezone} from "@/types/students";
+import {Student, type StudentFormData, Timezone} from "@/types/students";
 
 const $q = useQuasar()
 
 const studentStore = useStudentStore()
-const student = ref(null)
+const student = ref<StudentFormData | null>(null)
 const openStudentModal = ref<boolean>(false)
-const students = ref<Student[]>([])
+const { students } = storeToRefs(studentStore)
 
 const dictionariesStore = useDictionariesStore()
 const { currencies } = storeToRefs(dictionariesStore)
@@ -53,15 +53,8 @@ const columns: QTableColumn[] = [
     name: 'price',
     label: 'Price',
     align: 'left',
-    field: 'price',
-    sortable: true,
-  },
-  {
-    name: 'currency_id',
-    label: 'Currency',
-    align: 'left',
     field: (row: Student) =>
-        currencies.value.find((c) => c.id === row.currency_id)?.symbol ?? '',
+        `${row.price} ${currencies.value.find((c) => c.id === row.currency_id)?.symbol ?? ''}` ,
   },
   {
     name: 'timezone',
@@ -87,6 +80,19 @@ const columns: QTableColumn[] = [
   },
 ]
 
+const editStudent = (row: Student) => {
+  student.value = {
+    id: row.id,
+    name: row.name,
+    price: row.price,
+    comment: row.comment,
+    timezone: row.timezone,
+    currency_id: row.currency_id
+  }
+
+  openStudentModal.value = true
+}
+
 const deleteStudent = (row: Student) => {
   $q.dialog({
     title: 'Confirm',
@@ -97,6 +103,12 @@ const deleteStudent = (row: Student) => {
     await studentStore.deleteStudent(row.id)
   })
 }
+
+watch(openStudentModal, (val) => {
+  if (!val) {
+    student.value = null
+  }
+})
 </script>
 
 <template>
@@ -116,6 +128,14 @@ const deleteStudent = (row: Student) => {
     >
       <template #body-cell-actions="{ row }">
         <q-td style="text-align: center">
+          <q-btn
+            icon="edit"
+            color="primary"
+            flat
+            round
+            size="sm"
+            @click="editStudent(row)"
+          />
           <q-btn
             icon="delete"
             color="negative"

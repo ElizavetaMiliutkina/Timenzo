@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {defineEmits, defineProps, ref, computed} from "vue";
+import {defineEmits, defineProps, ref, computed, watch} from "vue";
 import type {StudentFormData} from '@/types/students'
 import LocationSelect from "@/components/LocationSelect.vue";
 import {useStudentStore} from "@/store/students";
@@ -37,25 +37,49 @@ const { currencies } = storeToRefs(dictionariesStore)
 
 dictionariesStore.fetchCurrencies()
 
+const isEdit = computed(() => !!props.form?.id)
 
 const onSubmit = async () => {
   if (formRef.value?.validate() && form.value.timezone) {
-    const response = await studentStore.postStudent(form.value)
+
+    let response
+
+    if (isEdit.value && props.form?.id) {
+      response = await studentStore.updateStudent(props.form.id, form.value)
+    } else {
+      response = await studentStore.postStudent(form.value)
+    }
+
     if (response) closeModal()
   }
 }
+
 const closeModal = () => {
   emit('update:modelValue', false)
   resetForm()
 }
 
 const resetForm = () => {
-  form.value.name = ''
-  form.value.price = 0
-  form.value.timezone = null
-  form.value.comment = ''
-  form.value.currency_id = 1
+  form.value = {
+    name: '',
+    price: 0,
+    comment: '',
+    timezone: null,
+    currency_id: 1
+  }
 }
+
+watch(
+    () => props.form,
+    (val) => {
+      if (val) {
+        form.value = { ...val }
+      } else {
+        resetForm()
+      }
+    },
+    { immediate: true }
+)
 
 </script>
 
@@ -67,7 +91,7 @@ const resetForm = () => {
     <q-card style="min-width: 400px">
       <q-card-section>
         <div class="text-h6">
-          New Student
+          {{ isEdit ? 'Edit Student' : 'New Student' }}
         </div>
         <q-form
           ref="formRef"

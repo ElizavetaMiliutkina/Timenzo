@@ -53,6 +53,7 @@ function onSelect(val: LocationOption) {
     <q-select
       v-model="selectedLocation"
       use-input
+      clearable
       input-debounce="0"
       :options="locationSuggestions"
       :rules="[val => !!val || 'Enter your city']"

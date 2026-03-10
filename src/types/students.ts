@@ -4,7 +4,7 @@ export interface Student {
     price: number
     timezone: Timezone
     currency_id: number
-    commit?: string
+    comment?: string
 }
 
 export interface Timezone {
@@ -23,7 +23,7 @@ export type StudentFormData = {
     id?: number
     name: string
     price: number
-    comment: string
+    comment: string | undefined
     timezone: Timezone | null
     currency_id: number
 }
