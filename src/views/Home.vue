@@ -116,6 +116,7 @@ watch(openStudentModal, (val) => {
     <q-btn
       label="Add New"
       color="primary"
+      class="q-mx-md q-my-sm"
       @click="() => openStudentModal = true"
     />
     <add-student-modal
