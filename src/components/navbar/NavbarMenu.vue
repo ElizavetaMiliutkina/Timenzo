@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {useRouter} from "vue-router";
-import {useAuthStore} from "@/store/auth.ts"
+import {useAuthStore} from "@/store/auth"
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -13,19 +13,22 @@ function onLogout() {
 </script>
 
 <template>
-  <div class="q-pa-md navbar_btn_dropdown">
+  <div class="q-pa-md navbar_btn_dropdown cursor-pointer">
     <q-btn-dropdown
       label=""
+      dense
+      flat
       dropdown-icon="change_history"
     >
       <q-list>
         <q-item
           v-close-popup
           clickable
-          @click=""
         >
           <q-item-section>
-            <q-item-label>Settings</q-item-label>
+            <q-item-label class="disabled">
+              Settings
+            </q-item-label>
           </q-item-section>
         </q-item>
 
@@ -42,11 +45,4 @@ function onLogout() {
     </q-btn-dropdown>
   </div>
 </template>
-
-<style scoped>
-.navbar_btn_dropdown .q-btn {
-  border: none!important;
-  position: unset!important;
-}
-</style>
 
