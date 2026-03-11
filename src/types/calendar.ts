@@ -41,10 +41,15 @@ export interface CalendarEvent {
     timeZone: string
 }
 
+export interface Dataset {
+    label: string;
+    data: number[];
+}
+
 export interface GraphData {
     labels: string[];
-    data: number[];
-    completed: number[];
+    datasets: Dataset[];
+    completed?: number[];
 }
 
 

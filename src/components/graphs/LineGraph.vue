@@ -17,23 +17,27 @@ ChartJS.register(Title, Tooltip, Legend, LineElement, PointElement, CategoryScal
 
 const props = defineProps({
   labels: Array,
-  data: Array
+  datasets: Array
 })
+console.log(props.data)
+
+const colors = [
+  "#42A5F5",
+  "#66BB6A",
+  "#FFA726",
+  "#AB47BC"
+]
 
 const chartData = computed(() => ({
   labels: props.labels,
-  datasets: [
-    {
-      label: 'Income ($)',
-      data: props.data,
-      borderColor: '#42A5F5',
-      backgroundColor: 'rgba(66, 165, 245, 0.2)',
-      tension: 0.3,
-      fill: true,
-      pointRadius: 5,
-      pointHoverRadius: 7
-    }
-  ]
+  datasets: props.datasets.map((dataset, index) => ({
+    ...dataset,
+    borderColor: colors[index % colors.length],
+    backgroundColor: colors[index % colors.length] + "33",
+    tension: 0.3,
+    fill: true,
+    pointRadius: 5
+  }))
 }))
 
 const chartOptions = {
@@ -57,7 +61,7 @@ const chartOptions = {
       beginAtZero: true,
       title: {
         display: true,
-        text: '$'
+        text: ''
       }
     }
   }

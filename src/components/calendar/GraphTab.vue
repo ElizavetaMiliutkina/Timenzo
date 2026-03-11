@@ -2,18 +2,20 @@
 import LineGraph from "@/components/graphs/LineGraph.vue";
 import {onMounted, ref, watch} from 'vue'
 import { useCalendarStore } from '@/store/calendar'
+import {Dataset} from "@/types/calendar";
+
 
 const calendarStore = useCalendarStore()
 
 const period = ref(3)
 const labels = ref<string[]>([])
-const data = ref<number[]>([])
+const datasets = ref<Dataset[]>([])
 
 
 const getGraphData = async () => {
   await calendarStore.incomeGraph(period.value)
-  labels.value = calendarStore.graphData ? calendarStore.graphData.labels : []
-  data.value =calendarStore.graphData ? calendarStore.graphData.data : []
+  labels.value = calendarStore.graphData?.labels ?? []
+  datasets.value = calendarStore.graphData?.datasets ?? []
 }
 
 onMounted(async () => {
@@ -24,7 +26,7 @@ watch(
     () => calendarStore.graphData,
     (newData) => {
       labels.value = newData ? newData.labels : []
-      data.value = newData ? newData.data : []
+      datasets.value = newData ? newData.datasets : []
     },
     { deep: true }
 )
@@ -61,10 +63,21 @@ watch(period, async () => {
     />
   </div>
   <line-graph
-    v-if="data.length"
+    v-if="datasets.length"
     :labels="labels"
-    :data="data"
+    :datasets="datasets"
   />
+  <div v-if="datasets">
+    <b>RESULT:</b>
+    <div
+      v-for="set in datasets"
+      :key="set.label"
+    >
+      <div>
+        {{ set.label }} — {{ set.data.reduce((a,b) => a + b, 0) }}
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
