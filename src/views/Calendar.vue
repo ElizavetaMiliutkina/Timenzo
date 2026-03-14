@@ -30,7 +30,7 @@ const tab = ref('schedule')
         v-model="tab"
         dense
         align="left"
-        class="text-primary"
+        class="text-primary q-mb-md"
         active-color="primary"
         indicator-color="primary"
         narrow-indicator
@@ -102,6 +102,6 @@ b {
 
 .demo-app-main {
   flex-grow: 1;
-  padding: 3em;
+  padding: 20px;
 }
 </style>

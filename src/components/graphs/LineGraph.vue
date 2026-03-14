@@ -19,7 +19,6 @@ const props = defineProps({
   labels: Array,
   datasets: Array
 })
-console.log(props.data)
 
 const colors = [
   "#42A5F5",

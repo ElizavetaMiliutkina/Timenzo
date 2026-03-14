@@ -41,6 +41,16 @@ body,
   font-size: 11px;
 }
 
+/*.q-panel > div {*/
+/*  height: calc(100vh - 150px)!important;*/
+/*  width: auto!important;*/
+/*}*/
+
+/*.q-panel {*/
+/*  height: calc(100vh - 150px)!important;*/
+/*  width: auto!important;*/
+/*}*/
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
