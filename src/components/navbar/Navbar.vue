@@ -51,7 +51,6 @@ import NavbarMenu from "@/components/navbar/NavbarMenu.vue";
   .active {
     text-decoration: underline;
     text-underline-offset: 6px;
-    //text-shadow: 2px 2px #2c2d30;
   }
 }
 </style>

@@ -159,10 +159,6 @@ const fetchStudents = async () => {
 
 fetchStudents()
 
-// function selectStudent() {
-//
-// }
-
 function formatedDateTime(
     time: string,
     date: string,

@@ -215,8 +215,3 @@ b {
   margin-right: 3px;
 }
 </style>
-<!--<style>-->
-<!--.fc-timegrid-slot-lane:empty {-->
-<!--  display: none;-->
-<!--}-->
-<!--</style>-->

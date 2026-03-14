@@ -21,16 +21,6 @@ const tab = ref('schedule')
 <template>
   <div class="demo-app">
     <div class="demo-app-sidebar">
-      <div class="demo-app-sidebar-section">
-        <!--        <label>-->
-        <!--          <input-->
-        <!--              type="checkbox"-->
-        <!--              :checked="calendarOptions.weekends"-->
-        <!--              @change="handleWeekendsToggle"-->
-        <!--          />-->
-        <!--          toggle weekends-->
-        <!--        </label>-->
-      </div>
       <event-card
         title="All Events"
       />
@@ -86,16 +76,28 @@ b {
 }
 .demo-app {
   display: flex;
-  min-height: 100%;
+  min-height: 0;
+  height: 100%;
   font-family: Arial, Helvetica Neue, Helvetica, sans-serif;
   font-size: 14px;
 }
 .demo-app-sidebar {
+  display: flex;
+  flex-direction: column;
   padding: 2em;
   width: 300px;
+  min-width: 300px;
+  min-height: 0;
+  max-height: calc(100vh - 64px);
+  overflow: hidden;
   line-height: 1.5;
-  background: #eaf9ff;
+  background: white;
   border-right: 1px solid #d3e2e8;
+}
+
+.demo-app-sidebar :deep(.event-card) {
+  flex: 1;
+  min-height: 0;
 }
 
 .demo-app-main {
