@@ -134,6 +134,7 @@ async function onSubmitForm(data: EventDataCreate) {
 
 const calendarOptions = ref<{
   plugins: any[]
+  firstDay:number
   headerToolbar: Record<string, string>
   initialView: string
   initialEvents: EventInput[]
@@ -151,6 +152,7 @@ const calendarOptions = ref<{
       failureCallback: (error: any) => void
   ) => void
 }>({
+  firstDay:1,
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
   headerToolbar: {
     left: 'prev,next today',
