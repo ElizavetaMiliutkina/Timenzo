@@ -103,5 +103,7 @@ b {
 .demo-app-main {
   flex-grow: 1;
   padding: 20px;
+  max-height: calc(100vh - 64px);
+  overflow: auto;
 }
 </style>

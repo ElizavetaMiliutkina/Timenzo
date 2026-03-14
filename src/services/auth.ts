@@ -26,7 +26,7 @@ export const loginUser = async (payload: LoginPayload) => {
 
         authStore.setTokens(data.access_token, data.refresh_token)
         authStore.setUser(data.user)
-        router.push('/home')
+        await router.push('/home')
 
         return data;
     } catch (error) {

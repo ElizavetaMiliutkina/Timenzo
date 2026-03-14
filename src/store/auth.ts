@@ -1,20 +1,28 @@
 import { defineStore } from 'pinia'
 import { User } from '@/types/user'
 
+function getStoredUser(): User | null {
+    try {
+        const raw = localStorage.getItem('user')
+        return raw ? JSON.parse(raw) as User : null
+    } catch {
+        return null
+    }
+}
+
 export const useAuthStore = defineStore('user', {
     state: (): {
         user: User | null;
         accessToken: string;
         refreshToken: string;
     } => ({
-        user: null,
+        user: getStoredUser(),
         accessToken: localStorage.getItem('access_token') || '',
         refreshToken: localStorage.getItem('refresh_token') || ''
     }),
     actions: {
         setUser(userData: User) {
             this.user = userData
-            console.log(userData, 'userData')
             localStorage.setItem('user', JSON.stringify(userData))
         },
         setTokens(access: string, refresh: string) {
@@ -27,7 +35,9 @@ export const useAuthStore = defineStore('user', {
             this.user = null
             this.accessToken = ''
             this.refreshToken = ''
-            localStorage.clear()
+            localStorage.removeItem('access_token')
+            localStorage.removeItem('refresh_token')
+            localStorage.removeItem('user')
         }
     }
 })
