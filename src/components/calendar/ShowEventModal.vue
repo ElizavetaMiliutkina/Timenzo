@@ -75,15 +75,13 @@ const EditEvent = () => {
       </div>
       <q-card-actions align="right">
         <q-btn
-          flat
           label="Cancel"
-          color="primary"
+          color="grey"
           @click="closeModal"
         />
         <q-btn
-          flat
           label="Delete"
-          color="danger"
+          color="red"
           @click="() => {
             emit('delete', event?.id)
           }"

@@ -3,10 +3,12 @@ import {EventDataCreate, EventData, GraphData} from '@/types/calendar'
 import { Notify } from 'quasar'
 
 import axios from "@/plugins/axios";
+import {format, subYears} from "date-fns";
 
 export const useCalendarStore = defineStore('calendar', {
     state: (): {
         events: EventData[]
+        periodEvents: EventData[]
         lastEventPayload: {
             start: string,
             end: string
@@ -15,6 +17,7 @@ export const useCalendarStore = defineStore('calendar', {
         graphPeriod: number
     } => ({
         events: [],
+        periodEvents: [],
         lastEventPayload: {
             start: '',
             end: ''
@@ -29,9 +32,35 @@ export const useCalendarStore = defineStore('calendar', {
                 this.lastEventPayload.end = end
                 const response = await axios.get<EventData[]>(`/events?start=${start}&end=${end}`)
                 this.events = response.data
+
+                const now = new Date()
+                const startDate = subYears(now, 1)
+
+                const endPeriod = format(now, "yyyy-MM-dd'T'HH:mm:ss")
+                const startPeriod = format(startDate, "yyyy-MM-dd'T'HH:mm:ss")
+
+                await this.getPeriodEvents(startPeriod, endPeriod, false)
                 return response.data
             } catch (error) {
                 console.error('Error fetching events:', error)
+                return []
+            }
+        },
+        async getPeriodEvents(start: string, end: string, completed?: boolean): Promise<EventData[]> {
+            try {
+                this.lastEventPayload.start = start
+                this.lastEventPayload.end = end
+                const params: Record<string, any> = { start, end }
+
+                if (completed !== undefined) {
+                    params.completed = completed
+                }
+
+                const response = await axios.get<EventData[]>('/events', { params })
+                this.periodEvents = response.data
+                return response.data
+            } catch (error) {
+                console.error('Error fetching period events:', error)
                 return []
             }
         },

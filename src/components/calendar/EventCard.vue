@@ -1,22 +1,17 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { format, parseISO } from 'date-fns'
 import { useCalendarStore } from '@/store/calendar'
 
 const calendarStore = useCalendarStore()
 
-const filteredEvents = computed(() => {
-  const now = new Date()
-  return calendarStore.events.filter(event => {
-    const end = event.end ?? event.start
-    const completed = event.extendedProps?.completed
-    if (!end) return false
-    return new Date(end) <= now && completed === false
-  })
-})
-
 const completeEv = async (id: string) => {
   const response = await calendarStore.completeEvent(id)
+  if (response) {
+    await calendarStore.reloadEvents()
+  }
+}
+const deleteEv = async (id: string) => {
+  const response = await calendarStore.deleteEvent(id)
   if (response) {
     await calendarStore.reloadEvents()
   }
@@ -26,10 +21,10 @@ const completeEv = async (id: string) => {
 
 <template>
   <div>
-    <h2>All Events ({{ filteredEvents.length }})</h2>
+    <h2>All Events ({{ calendarStore.periodEvents.length }})</h2>
 
     <div
-      v-for="event in filteredEvents"
+      v-for="event in calendarStore.periodEvents"
       :key="event.id"
       class="calendar-card"
     >
@@ -47,6 +42,12 @@ const completeEv = async (id: string) => {
         >
           Complete
         </q-btn>
+        <q-btn
+          color="red"
+          @click="deleteEv(event.id)"
+        >
+          Delete
+        </q-btn>
       </div>
     </div>
   </div>
@@ -62,6 +63,10 @@ const completeEv = async (id: string) => {
   padding: 16px;
   margin-bottom: 20px;
   &__header {
+    display: flex;
+    justify-content: space-between;
+  }
+  &__footer {
     display: flex;
     justify-content: space-between;
   }
