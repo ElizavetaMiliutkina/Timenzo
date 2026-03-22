@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { User } from '@/types/user'
+import { resetAllNonAuthStores } from '@/store/resetStores'
 
 function getStoredUser(): User | null {
     try {
@@ -32,6 +33,7 @@ export const useAuthStore = defineStore('user', {
             localStorage.setItem('refresh_token', refresh)
         },
         logout() {
+            resetAllNonAuthStores()
             this.user = null
             this.accessToken = ''
             this.refreshToken = ''

@@ -19,7 +19,7 @@ export const useDictionariesStore = defineStore('dictionaries', {
             } catch (error) {
                 console.error('Error fetching currencies:', error)
             } finally {
-                this.loaded = false
+                this.loading = false
             }
         },
     },

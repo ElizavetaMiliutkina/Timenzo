@@ -53,6 +53,9 @@ const deleteEv = async (id: string) => {
         </div>
       </div>
     </div>
+    <h2 class="event-card__header">
+      Work for today
+    </h2>
   </div>
 </template>
 
