@@ -87,7 +87,8 @@ const editStudent = (row: Student) => {
     price: row.price,
     comment: row.comment,
     timezone: row.timezone,
-    currency_id: row.currency_id
+    currency_id: row.currency_id,
+    color: row.color ?? '#000000',
   }
 
   openStudentModal.value = true

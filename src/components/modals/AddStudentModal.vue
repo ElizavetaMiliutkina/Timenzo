@@ -6,6 +6,7 @@ import {useStudentStore} from "@/store/students";
 import {useDictionariesStore} from "@/store/dictionaries";
 import {storeToRefs} from "pinia";
 import type { QForm } from 'quasar'
+import ColorPicker from "@/components/shared/ColorPicker.vue";
 
 const studentStore = useStudentStore()
 
@@ -29,7 +30,8 @@ const form = ref<StudentFormData>(props.form ?? {
   price: 0,
   comment: '',
   timezone: null,
-  currency_id:1
+  currency_id:1,
+  color: '#000000',
 })
 
 const dictionariesStore = useDictionariesStore()
@@ -65,7 +67,8 @@ const resetForm = () => {
     price: 0,
     comment: '',
     timezone: null,
-    currency_id: 1
+    currency_id: 1,
+    color: '#000000',
   }
 }
 
@@ -144,6 +147,18 @@ watch(
             label="Comment"
             :rules="[val => val.length >= 0 || 'Enter comment']"
           />
+          <q-input
+            v-model="form.color"
+            label="Color"
+          >
+            <template #append>
+              <q-icon name="palette">
+                <q-popup-proxy>
+                  <ColorPicker v-model="form.color" />
+                </q-popup-proxy>
+              </q-icon>
+            </template>
+          </q-input>
         </q-form>
       </q-card-section>
 

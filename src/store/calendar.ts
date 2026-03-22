@@ -33,8 +33,6 @@ export const useCalendarStore = defineStore('calendar', {
                 const response = await axios.get<EventData[]>(`/events?start=${start}&end=${end}`)
                 this.events = response.data
 
-                console.log(this.events, 'Events')
-
                 const now = new Date()
                 const startDate = subYears(now, 1)
 

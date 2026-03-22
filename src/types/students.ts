@@ -4,7 +4,8 @@ export interface Student {
     price: number
     timezone: Timezone
     currency_id: number
-    comment?: string
+    comment: string
+    color: string | null
 }
 
 export interface Timezone {
@@ -26,4 +27,5 @@ export type StudentFormData = {
     comment: string | undefined
     timezone: Timezone | null
     currency_id: number
+    color: string | null
 }

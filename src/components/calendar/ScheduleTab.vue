@@ -146,6 +146,7 @@ const calendarOptions = ref<{
   select: (info: DateSelectArg) => void
   eventClick: (info: EventClickArg) => void
   eventsSet: (events: EventApi[]) => void
+  eventDidMount: (info: any) => void
   events: (
       info: CalendarEvent,
       successCallback: (events: EventData[]) => void,
@@ -169,6 +170,11 @@ const calendarOptions = ref<{
   select: handleDateSelect,
   eventClick: handleEventClick,
   eventsSet: () => {},
+  eventDidMount: (info: any) => {
+    const color = info.event.extendedProps?.student?.color || 'gray'
+    info.el.style.background = color
+    info.el.style.color = 'white'
+  },
   events: async (info, successCallback, failureCallback) => {
     try {
       const start = DateTime.fromJSDate(info.start).toFormat('yyyy-MM-dd')
