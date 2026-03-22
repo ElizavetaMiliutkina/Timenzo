@@ -1,5 +1,6 @@
 import { createApp } from 'vue';
-import './style.css';
+import './style.scss';
+import '@/styles/custom-scrollbar.scss';
 import App from './App.vue';
 import router from '@/router/index.js';
 import { createPinia } from 'pinia';

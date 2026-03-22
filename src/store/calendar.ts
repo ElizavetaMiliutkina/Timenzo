@@ -33,13 +33,15 @@ export const useCalendarStore = defineStore('calendar', {
                 const response = await axios.get<EventData[]>(`/events?start=${start}&end=${end}`)
                 this.events = response.data
 
+                console.log(this.events, 'Events')
+
                 const now = new Date()
                 const startDate = subYears(now, 1)
 
                 const endPeriod = format(now, "yyyy-MM-dd'T'HH:mm:ss")
                 const startPeriod = format(startDate, "yyyy-MM-dd'T'HH:mm:ss")
 
-                await this.getPeriodEvents(startPeriod, endPeriod, false)
+                this.periodEvents = await this.getPeriodEvents(startPeriod, endPeriod, false)
                 return response.data
             } catch (error) {
                 console.error('Error fetching events:', error)
@@ -55,9 +57,7 @@ export const useCalendarStore = defineStore('calendar', {
                 if (completed !== undefined) {
                     params.completed = completed
                 }
-
                 const response = await axios.get<EventData[]>('/events', { params })
-                this.periodEvents = response.data
                 return response.data
             } catch (error) {
                 console.error('Error fetching period events:', error)

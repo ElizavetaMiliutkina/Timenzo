@@ -15,7 +15,6 @@ onMounted(async () => {
 
 const tab = ref('schedule')
 
-
 </script>
 
 <template>
@@ -45,18 +44,20 @@ const tab = ref('schedule')
         />
       </q-tabs>
 
-      <q-tab-panels
-        v-model="tab"
-        animated
-      >
-        <q-tab-panel name="schedule">
-          <ScheduleTab />
-        </q-tab-panel>
-
-        <q-tab-panel name="graph">
-          <graph-tab />
-        </q-tab-panel>
-      </q-tab-panels>
+      <div class="calendar-tab-panels block-wrapper">
+        <div
+          v-show="tab === 'schedule'"
+          class="calendar-tab-panels__pane"
+        >
+          <ScheduleTab class="" />
+        </div>
+        <div
+          v-if="tab === 'graph'"
+          class="calendar-tab-panels__pane block-wrapper"
+        >
+          <GraphTab class="bg-white p-2" />
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -84,7 +85,6 @@ b {
 .demo-app-sidebar {
   display: flex;
   flex-direction: column;
-  padding: 2em;
   width: 300px;
   min-width: 300px;
   min-height: 0;

@@ -192,7 +192,7 @@ const calendarOptions = ref<{
   >
     <template #eventContent="{ event, timeText }">
       <b>{{ timeText }}</b>
-      <b>{{ event.extendedProps?.student.name }}</b> -
+      <b>{{ event.extendedProps?.student?.name ?? '—' }}</b> -
       <i>{{ event.title }}</i>
     </template>
   </FullCalendar>
