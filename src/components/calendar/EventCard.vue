@@ -6,7 +6,7 @@ import type { EventData } from '@/types/calendar'
 
 const calendarStore = useCalendarStore()
 
-const todayEvents = ref<EventData[] | null>(null)
+const todayEvents = ref<EventData[] | []>([])
 
 const completeEv = async (id: string) => {
   const response = await calendarStore.completeEvent(id)
@@ -81,7 +81,7 @@ onMounted(() => {
       <h2 class="event-card__header">
         Work for today
       </h2>
-      <div v-if="todayEvents">
+      <div v-if="todayEvents.length">
         <div
           v-for="(event, index) in todayEvents"
           :key="event.id"

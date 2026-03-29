@@ -88,6 +88,7 @@ const editStudent = (row: Student) => {
     comment: row.comment,
     timezone: row.timezone,
     currency_id: row.currency_id,
+    paid: row.paid ?? 0,
     color: row.color ?? '#000000',
   }
 

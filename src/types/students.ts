@@ -5,6 +5,7 @@ export interface Student {
     timezone: Timezone
     currency_id: number
     comment: string
+    paid: number
     color: string | null
 }
 
@@ -27,5 +28,6 @@ export type StudentFormData = {
     comment: string | undefined
     timezone: Timezone | null
     currency_id: number
+    paid: number
     color: string | null
 }

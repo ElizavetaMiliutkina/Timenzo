@@ -77,8 +77,7 @@ b {
 }
 .demo-app {
   display: flex;
-  min-height: 0;
-  height: 100%;
+  height: calc(100vh - 64px);
   font-family: Arial, Helvetica Neue, Helvetica, sans-serif;
   font-size: 14px;
 }

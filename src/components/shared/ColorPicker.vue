@@ -27,7 +27,7 @@ watch(
   <div class="color-picker-wrapper">
     <ColorPicker
       v-model:pure-color="color"
-      format="hex"
+      format="rgb"
       shape="square"
       use-type="both"
       :is-widget="true"

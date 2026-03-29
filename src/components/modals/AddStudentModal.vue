@@ -31,6 +31,7 @@ const form = ref<StudentFormData>(props.form ?? {
   comment: '',
   timezone: null,
   currency_id:1,
+  paid:0,
   color: '#000000',
 })
 
@@ -68,6 +69,7 @@ const resetForm = () => {
     comment: '',
     timezone: null,
     currency_id: 1,
+    paid:0,
     color: '#000000',
   }
 }
@@ -147,18 +149,38 @@ watch(
             label="Comment"
             :rules="[val => val.length >= 0 || 'Enter comment']"
           />
-          <q-input
-            v-model="form.color"
-            label="Color"
+
+          <div
+            class="row"
+            style="column-gap: 16px"
           >
-            <template #append>
-              <q-icon name="palette">
-                <q-popup-proxy>
-                  <ColorPicker v-model="form.color" />
-                </q-popup-proxy>
-              </q-icon>
-            </template>
-          </q-input>
+            <div class="col">
+              <q-input
+                v-model="form.paid"
+                filled
+                type="number"
+                label="Paid"
+                :rules="[
+                  val => val !== null && val !== '' || 'Enter price',
+                  val => val >= 0 || 'Price must be positive'
+                ]"
+              />
+            </div>
+            <div class="col-auto">
+              <q-input
+                v-model="form.color"
+                label="Color"
+              >
+                <template #append>
+                  <q-icon name="palette">
+                    <q-popup-proxy>
+                      <ColorPicker v-model="form.color" />
+                    </q-popup-proxy>
+                  </q-icon>
+                </template>
+              </q-input>
+            </div>
+          </div>
         </q-form>
       </q-card-section>
 

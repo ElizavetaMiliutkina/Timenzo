@@ -6,6 +6,10 @@ const instance = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
 })
 
+const refreshInstance = axios.create({
+    baseURL: import.meta.env.VITE_API_URL,
+})
+
 instance.interceptors.request.use(config => {
     const token = localStorage.getItem('access_token')
     if (token) {
@@ -17,7 +21,11 @@ instance.interceptors.request.use(config => {
 instance.interceptors.response.use(
     response => response,
     async error => {
-        if (error.response?.status === 401) {
+        if (
+            error.response?.status === 401 &&
+            !error.config._retry
+        ) {
+            error.config._retry = true
             const refreshToken = localStorage.getItem('refresh_token')
             if (!refreshToken) {
                 useAuthStore().logout()
@@ -25,17 +33,20 @@ instance.interceptors.response.use(
                 return Promise.reject(error)
             }
             try {
-                const refreshResponse = await instance.post('/refresh', {
+                const refreshResponse = await refreshInstance.post('/refresh', {
                     refresh_token: refreshToken,
                 })
+
                 const newAccessToken = refreshResponse.data.access_token
-                const newRefreshToken = refreshResponse.data.refresh_token ?? refreshToken
+                const newRefreshToken =
+                    refreshResponse.data.refresh_token ?? refreshToken
+
                 useAuthStore().setTokens(newAccessToken, newRefreshToken)
 
                 error.config.headers.Authorization = `Bearer ${newAccessToken}`
+
                 return instance(error.config)
             } catch (refreshError) {
-                console.warn('Refresh token не сработал, нужно перелогиниться')
                 useAuthStore().logout()
                 router.push('/login')
                 return Promise.reject(refreshError)
