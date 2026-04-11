@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {defineEmits, defineProps, ref, computed, watch} from "vue";
+import { defineEmits, defineProps, ref, computed, watch, nextTick } from "vue";
 import type {StudentFormData} from '@/types/students'
 import LocationSelect from "@/components/LocationSelect.vue";
 import {useStudentStore} from "@/store/students";
@@ -7,23 +7,59 @@ import {useDictionariesStore} from "@/store/dictionaries";
 import {storeToRefs} from "pinia";
 import type { QForm } from 'quasar'
 import ColorPicker from "@/components/shared/ColorPicker.vue";
+import { useUnsavedClose } from '@/composables/useUnsavedClose'
 
 const studentStore = useStudentStore()
+const { confirmCloseIfDirty } = useUnsavedClose()
 
 const props = defineProps<{
   modelValue: boolean;
   form: StudentFormData | null
 }>()
 
-const dialogModel = computed({
-  get: () => props.modelValue,
-  set: (value: boolean) => {
-    emit('update:modelValue', value)
+const emit = defineEmits(['update:modelValue'])
+
+function formSnapshot(f: StudentFormData) {
+  return JSON.stringify({
+    name: f.name,
+    price: f.price,
+    comment: f.comment ?? '',
+    currency_id: f.currency_id,
+    timezoneId: f.timezone?.id ?? null,
+    color: f.color,
+    paid: f.paid,
+  })
+}
+
+const baseline = ref('')
+
+watch(
+  () => props.modelValue,
+  async (open) => {
+    if (open) {
+      await nextTick()
+      baseline.value = formSnapshot(form.value)
+    }
   }
-})
+)
+
+const isDirty = computed(() => formSnapshot(form.value) !== baseline.value)
+
+function finalizeClose() {
+  emit('update:modelValue', false)
+  resetForm()
+}
+
+/** Только клик по оверлею / Esc — не кнопка Cancel */
+function onDialogDismissRequest(open: boolean) {
+  if (open) {
+    emit('update:modelValue', true)
+    return
+  }
+  confirmCloseIfDirty(isDirty.value, finalizeClose)
+}
 
 const formRef = ref<QForm | null>(null)
-const emit = defineEmits(['update:modelValue'])
 
 const form = ref<StudentFormData>(props.form ?? {
   name: '',
@@ -53,14 +89,11 @@ const onSubmit = async () => {
       response = await studentStore.postStudent(form.value)
     }
 
-    if (response) closeModal()
+    if (response) finalizeClose()
   }
 }
 
-const closeModal = () => {
-  emit('update:modelValue', false)
-  resetForm()
-}
+const closeModal = () => finalizeClose()
 
 const resetForm = () => {
   form.value = {
@@ -90,8 +123,8 @@ watch(
 
 <template>
   <q-dialog
-    v-model="dialogModel"
-    persistent
+    :model-value="modelValue"
+    @update:model-value="onDialogDismissRequest"
   >
     <q-card style="min-width: 400px">
       <q-card-section>

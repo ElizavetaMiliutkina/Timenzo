@@ -85,8 +85,6 @@ const selectedIndex = ref(13);
 const isInitialized = ref(false);
 const browserTimezone = DateTime.local().zoneName
 
-console.log(browserTimezone, 'browserTimezone')
-
 const resolvedTimezone = computed(() => {
   // если пришёл таймзон студента (например America/New_York)
   if (props.timezone) {
@@ -151,7 +149,8 @@ const localTimeDisplay = computed(() => {
 })
 
 watch(
-    selectedIndex, debounce((val) => {
+    selectedIndex,
+    debounce((val) => {
       const minutes = val * props.slot * 60;
       const time = DateTime.fromObject({ hour: 0, minute: 0 }).plus({ minutes }).toFormat('HH:mm');
       emit('selectedTime', time);
@@ -198,8 +197,7 @@ const onScroll = () => {
   selectedIndex.value = closestIndex;
 }
 
-onMounted( async () => {
-  console.log(!!props.time)
+onMounted(async () => {
   setTimeout(async () => {
     const currentTime = props.time && props.time.trim() !== ''
         ? props.time

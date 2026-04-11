@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import type { QForm } from 'quasar'
 import { DateTime, Duration } from 'luxon'
 import { EventDataCreate } from '@/types/calendar'
+import { useDebounceFn } from '@vueuse/core'
 
 import TimeZoneSlider from '@/components/TimeZoneSlider.vue'
 import TimePeriod from '@/components/TimePeriod.vue'
@@ -12,8 +13,10 @@ import { useDictionariesStore } from '@/store/dictionaries'
 import {useStudentStore} from "@/store/students";
 import {Student, Timezone} from "@/types/students";
 import LocationSelect from "@/components/LocationSelect.vue";
+import { useUnsavedClose } from '@/composables/useUnsavedClose'
 
 const studentStore = useStudentStore()
+const { confirmCloseIfDirty } = useUnsavedClose()
 const { students } = storeToRefs(studentStore)
 const selectedStudent = ref<Student | null>(null)
 const studentTimezone = ref<Timezone|null>(null)
@@ -51,12 +54,50 @@ const { currencies } = storeToRefs(dictionariesStore)
 
 dictionariesStore.fetchCurrencies()
 
-const dialogModel = computed({
-  get: () => props.modelValue,
-  set: (value: boolean) => {
-    emit('update:modelValue', value)
-  },
+function scheduleSnapshot() {
+  return JSON.stringify({
+    form: { ...form.value },
+    studentId: selectedStudent.value?.id ?? null,
+    timezoneId: studentTimezone.value?.id ?? null,
+    selectStudentMode: selectStudentMode.value,
+    duration: { ...duration.value },
+  })
+}
+const baseline = ref('')
+const setBaseline = useDebounceFn(() => {
+  if (props.modelValue) {
+    baseline.value = scheduleSnapshot()
+  }
+}, 1000)
+
+watch(
+    () => props.modelValue,
+    (open) => {
+      if (!open) {
+        baseline.value = ''
+        return
+      }
+
+      setBaseline()
+    }
+)
+
+const isDirty = computed(() => {
+  if (!props.modelValue || baseline.value === '') return false
+  return scheduleSnapshot() !== baseline.value
 })
+
+function finalizeClose() {
+  emit('update:modelValue', false)
+}
+
+function onDialogDismissRequest(open: boolean) {
+  if (open) {
+    emit('update:modelValue', true)
+    return
+  }
+  confirmCloseIfDirty(isDirty.value, finalizeClose)
+}
 
 /* ===================== SYNC FROM PARENT ===================== */
 
@@ -144,11 +185,11 @@ async function onSubmit() {
     student_id: selectedStudent.value?.id || null,
   })
 
-  closeModal()
+  finalizeClose()
 }
 
 function closeModal() {
-  emit('update:modelValue', false)
+  finalizeClose()
 }
 
 const fetchStudents = async () => {
@@ -226,8 +267,8 @@ watch(
 
 <template>
   <q-dialog
-    v-model="dialogModel"
-    persistent
+    :model-value="modelValue"
+    @update:model-value="onDialogDismissRequest"
   >
     <q-card style="min-width: 400px">
       <q-card-section>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {defineEmits, defineProps, ref, watch} from "vue";
+import { defineEmits, defineProps, computed } from "vue";
 import { EventData } from "@/types/calendar";
 import { DateTime } from 'luxon';
 import {useDictionariesStore} from "@/store/dictionaries";
@@ -13,10 +13,16 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:modelValue', 'edit', 'unselect', 'delete'])
 
-const isOpen = ref(false)
-
-watch(() => props.modelValue, val => {
-  isOpen.value = val
+const dialogModel = computed({
+  get: () => props.modelValue,
+  set: (v: boolean) => {
+    if (!v) {
+      emit('unselect')
+      emit('update:modelValue', false)
+    } else {
+      emit('update:modelValue', true)
+    }
+  },
 })
 
 const dictionariesStore = useDictionariesStore()
@@ -25,8 +31,7 @@ const { currencies } = storeToRefs(dictionariesStore)
 dictionariesStore.fetchCurrencies()
 
 function closeModal() {
-  emit('unselect')
-  emit('update:modelValue', false)
+  dialogModel.value = false
 }
 
 const formatTime = (date: string) => {
@@ -56,10 +61,7 @@ const EditEvent = () => {
 </script>
 
 <template>
-  <q-dialog
-    v-model="isOpen"
-    persistent
-  >
+  <q-dialog v-model="dialogModel">
     <q-card
       v-if="event"
       class="card-info"

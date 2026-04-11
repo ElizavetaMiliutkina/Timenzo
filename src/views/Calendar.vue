@@ -49,7 +49,7 @@ const tab = ref('schedule')
           v-show="tab === 'schedule'"
           class="calendar-tab-panels__pane"
         >
-          <ScheduleTab class="" />
+          <ScheduleTab />
         </div>
         <div
           v-if="tab === 'graph'"
