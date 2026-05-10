@@ -1,3 +1,6 @@
+export type ExtraValue = string | number | boolean | null
+export type ExtraData = Record<string, ExtraValue>
+
 export interface Student {
     id: number
     name: string
@@ -7,6 +10,7 @@ export interface Student {
     comment: string
     paid: number
     color: string | null
+    extra?: ExtraData
 }
 
 export interface Timezone {
@@ -30,4 +34,5 @@ export type StudentFormData = {
     currency_id: number
     paid: number
     color: string | null
+    extra?: ExtraData
 }

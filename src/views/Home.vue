@@ -1,20 +1,29 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import Table from "@/components/table/Table.vue";
 import AddStudentModal from "@/components/modals/AddStudentModal.vue";
+import AdditionalColumnsModal from "@/components/modals/AdditionalColumnsModal.vue";
 import {useStudentStore} from "@/store/students";
 
 import { useQuasar, QTableColumn } from 'quasar'
 import {useDictionariesStore} from "@/store/dictionaries";
+import {useAdditionalColumnsStore} from "@/store/additionalColumns";
 import {storeToRefs} from "pinia";
 import {Student, type StudentFormData, Timezone} from "@/types/students";
+import {getColumnKey} from "@/types/additionalColumns";
+import {formatExtraValue} from "@/utils/extraValue";
 
 const $q = useQuasar()
 
 const studentStore = useStudentStore()
 const student = ref<StudentFormData | null>(null)
 const openStudentModal = ref<boolean>(false)
+const openAdditionalColumnsModal = ref<boolean>(false)
 const { students } = storeToRefs(studentStore)
+
+const additionalColumnsStore = useAdditionalColumnsStore()
+const { columns: additionalColumns } = storeToRefs(additionalColumnsStore)
+additionalColumnsStore.ensureLoaded()
 
 const dictionariesStore = useDictionariesStore()
 const { currencies } = storeToRefs(dictionariesStore)
@@ -39,7 +48,7 @@ const fetchStudents = () => {
 
 fetchStudents()
 
-const columns: QTableColumn[] = [
+const staticColumns: QTableColumn[] = [
   {
     name: 'name',
     required: true,
@@ -70,15 +79,31 @@ const columns: QTableColumn[] = [
     align: 'left',
     field: 'comment',
   },
-  {
-    name: 'actions',
-    label: 'Actions',
-    align: 'center',
-    field: () => null,
-    headerStyle: 'width: 1%',
-    style: 'width: 1%; white-space: nowrap;',
-  },
 ]
+
+const actionsColumn: QTableColumn = {
+  name: 'actions',
+  label: 'Actions',
+  align: 'center',
+  field: () => null,
+  headerStyle: 'width: 1%',
+  style: 'width: 1%; white-space: nowrap;',
+}
+
+const columns = computed<QTableColumn[]>(() => {
+  const dynamic: QTableColumn[] = additionalColumns.value.map((col, idx) => {
+    const key = getColumnKey(col, idx)
+    return {
+      name: `extra:${key}`,
+      label: col.label,
+      align: 'left',
+      field: (row: Student) => row.extra?.[key] ?? '',
+      format: (val: unknown) => formatExtraValue(val as never, col.type),
+      sortable: true,
+    }
+  })
+  return [...staticColumns, ...dynamic, actionsColumn]
+})
 
 const editStudent = (row: Student) => {
   student.value = {
@@ -90,6 +115,7 @@ const editStudent = (row: Student) => {
     currency_id: row.currency_id,
     paid: row.paid ?? 0,
     color: row.color ?? '#000000',
+    extra: { ...(row.extra ?? {}) },
   }
 
   openStudentModal.value = true
@@ -115,15 +141,29 @@ watch(openStudentModal, (val) => {
 
 <template>
   <div>
-    <q-btn
-      label="Add New"
-      color="primary"
-      class="q-mx-md q-my-sm"
-      @click="() => openStudentModal = true"
-    />
+    <div class="flex justify-between items-center">
+      <q-btn
+        label="Add Student"
+        color="primary"
+        class="q-mx-md q-my-sm"
+        @click="() => openStudentModal = true"
+      />
+      <q-btn
+        label="Additional Columns"
+        color="primary"
+        outline
+        class="q-mx-md q-my-sm"
+        icon-right="tune"
+        @click="() => openAdditionalColumnsModal = true"
+      />
+    </div>
     <add-student-modal
       v-model="openStudentModal"
       :form="student"
+    />
+    <additional-columns-modal
+      v-model="openAdditionalColumnsModal"
+      :columns="additionalColumns"
     />
     <Table
       :columns="columns"

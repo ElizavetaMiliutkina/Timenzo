@@ -1,16 +1,33 @@
 <script setup lang="ts">
 import { defineEmits, defineProps, ref, computed, watch, nextTick } from "vue";
-import type {StudentFormData} from '@/types/students'
+import type {ExtraData, StudentFormData} from '@/types/students'
 import LocationSelect from "@/components/LocationSelect.vue";
 import {useStudentStore} from "@/store/students";
 import {useDictionariesStore} from "@/store/dictionaries";
+import {useAdditionalColumnsStore} from "@/store/additionalColumns";
 import {storeToRefs} from "pinia";
 import type { QForm } from 'quasar'
 import ColorPicker from "@/components/shared/ColorPicker.vue";
+import DynamicField from "@/components/shared/DynamicField.vue";
 import { useUnsavedClose } from '@/composables/useUnsavedClose'
+import { getColumnKey } from '@/types/additionalColumns'
+import { defaultValueForType } from '@/utils/extraValue'
 
 const studentStore = useStudentStore()
 const { confirmCloseIfDirty } = useUnsavedClose()
+
+const additionalColumnsStore = useAdditionalColumnsStore()
+const { columns: additionalColumns } = storeToRefs(additionalColumnsStore)
+additionalColumnsStore.ensureLoaded()
+
+function buildEmptyExtra(existing?: ExtraData): ExtraData {
+  const out: ExtraData = {}
+  additionalColumns.value.forEach((col, idx) => {
+    const key = getColumnKey(col, idx)
+    out[key] = existing?.[key] ?? defaultValueForType(col.type)
+  })
+  return out
+}
 
 const props = defineProps<{
   modelValue: boolean;
@@ -28,6 +45,7 @@ function formSnapshot(f: StudentFormData) {
     timezoneId: f.timezone?.id ?? null,
     color: f.color,
     paid: f.paid,
+    extra: f.extra ?? {},
   })
 }
 
@@ -69,6 +87,7 @@ const form = ref<StudentFormData>(props.form ?? {
   currency_id:1,
   paid:0,
   color: '#000000',
+  extra: {},
 })
 
 const dictionariesStore = useDictionariesStore()
@@ -104,6 +123,7 @@ const resetForm = () => {
     currency_id: 1,
     paid:0,
     color: '#000000',
+    extra: buildEmptyExtra(),
   }
 }
 
@@ -111,12 +131,22 @@ watch(
     () => props.form,
     (val) => {
       if (val) {
-        form.value = { ...val }
+        form.value = { ...val, extra: buildEmptyExtra(val.extra) }
       } else {
         resetForm()
       }
     },
     { immediate: true }
+)
+
+watch(
+    () => props.modelValue,
+    async (open) => {
+      if (open) {
+        await additionalColumnsStore.ensureLoaded()
+        form.value.extra = buildEmptyExtra(form.value.extra ?? props.form?.extra)
+      }
+    },
 )
 
 </script>
@@ -214,6 +244,23 @@ watch(
               </q-input>
             </div>
           </div>
+
+          <template v-if="additionalColumns.length">
+            <q-separator class="q-my-sm" />
+            <div class="text-subtitle2 text-grey-7">
+              Additional columns
+            </div>
+            <div
+              v-for="(col, idx) in additionalColumns"
+              :key="col.id ?? col.key ?? idx"
+            >
+              <DynamicField
+                v-model="(form.extra as ExtraData)[getColumnKey(col, idx)]"
+                :label="col.label"
+                :type="col.type"
+              />
+            </div>
+          </template>
         </q-form>
       </q-card-section>
 
