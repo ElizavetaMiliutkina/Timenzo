@@ -39,11 +39,7 @@ watch(
 )
 
 const fetchStudents = () => {
-  if(studentStore.students && studentStore.students.length){
-    students.value = studentStore.students
-  } else {
-    studentStore.getStudents()
-  }
+  studentStore.getStudents()
 }
 
 fetchStudents()

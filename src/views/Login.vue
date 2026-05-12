@@ -53,17 +53,41 @@
     >
       {{ error }}
     </p>
+
+    <div
+      v-if="needsVerification"
+      class="resend-block"
+    >
+      <button
+        type="button"
+        class="link-btn"
+        :disabled="resending || !email"
+        @click="handleResend"
+      >
+        {{ resending ? 'Отправляем...' : 'Отправить письмо ещё раз' }}
+      </button>
+    </div>
+
+    <p
+      v-if="resendInfo"
+      class="info"
+    >
+      {{ resendInfo }}
+    </p>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
-import { loginUser } from "@/services/auth";
+import { loginUser, resendVerificationEmail } from "@/services/auth";
 
 const email = ref('')
 const password = ref('')
 const username = ref('')
 const error = ref('')
+const needsVerification = ref(false)
+const resending = ref(false)
+const resendInfo = ref('')
 const errors = reactive<{ email: string; password: string }>({
   email: '',
   password: ''
@@ -108,6 +132,8 @@ async function handleLogin() {
   error.value = ''
   errors.email = ''
   errors.password = ''
+  needsVerification.value = false
+  resendInfo.value = ''
 
   if (!validateForm()) {
     return
@@ -115,15 +141,48 @@ async function handleLogin() {
 
   username.value = email.value.slice(0, email.value.indexOf('@'));
 
-  try {
-    const payload = {
-      email: email.value,
-      username: username.value,
-      password: password.value
-    }
-    await loginUser(payload)
-  } catch (err) {
-    console.log(err)
+  const result = await loginUser({
+    email: email.value,
+    username: username.value,
+    password: password.value,
+  })
+
+  if (result.ok) return
+
+  switch (result.error.code) {
+    case 'email_not_verified':
+      needsVerification.value = true
+      error.value = 'Email ещё не подтверждён. Проверьте почту или запросите письмо повторно.'
+      break
+    case 'invalid_credentials':
+      error.value = 'Неверный email или пароль.'
+      break
+    case 'not_found':
+      error.value = 'Пользователь не найден.'
+      break
+    case 'network':
+      error.value = 'Сервер недоступен. Попробуйте позже.'
+      break
+    default:
+      error.value = result.error.message || 'Не удалось войти.'
+  }
+}
+
+async function handleResend() {
+  if (resending.value || !email.value) return
+  resending.value = true
+  resendInfo.value = ''
+
+  const result = await resendVerificationEmail({ email: email.value })
+  resending.value = false
+
+  if (result.ok) {
+    resendInfo.value = 'Письмо отправлено. Проверьте почту.'
+  } else if (result.error.code === 'already_verified') {
+    needsVerification.value = false
+    resendInfo.value = 'Email уже подтверждён — попробуйте войти ещё раз.'
+  } else {
+    resendInfo.value = result.error.message || 'Не удалось отправить письмо.'
   }
 }
 </script>
@@ -201,5 +260,30 @@ button:hover {
   margin-top: 10px;
   color: red;
   font-weight: 600;
+}
+
+.info {
+  margin-top: 8px;
+  color: #1f7a3a;
+  font-size: 13px;
+}
+
+.resend-block {
+  margin-top: 8px;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #007bff;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.link-btn:disabled {
+  color: #9bbde0;
+  cursor: not-allowed;
 }
 </style>

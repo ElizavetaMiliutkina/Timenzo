@@ -16,6 +16,12 @@ const routes = [
         component: () => import('../views/Register.vue'),
     },
     {
+        path: '/verify-email',
+        name: 'VerifyEmail',
+        meta: { public: true },
+        component: () => import('../views/VerifyEmail.vue'),
+    },
+    {
         path: '/home',
         name: 'Home',
         meta: { requiresAuth: true },

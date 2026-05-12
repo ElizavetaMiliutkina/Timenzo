@@ -3,7 +3,22 @@
     <h2 class="text-center">
       Registration form
     </h2>
-    <form @submit.prevent="handleRegister">
+
+    <div
+      v-if="submitted"
+      class="success-block"
+    >
+      <p class="success-title">
+        Проверьте почту
+      </p>
+      <p>{{ success }}</p>
+      <a href="/login">Перейти ко входу</a>
+    </div>
+
+    <form
+      v-else
+      @submit.prevent="handleRegister"
+    >
       <div class="form-group">
         <label for="email">Email:</label>
         <input
@@ -69,18 +84,11 @@
     >
       {{ error }}
     </p>
-    <p
-      v-if="success"
-      class="success"
-    >
-      {{ success }}
-    </p>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
 import { registerUser } from '@/services/auth'
 
 const email = ref('')
@@ -89,7 +97,7 @@ const username = ref('')
 const confirmPassword = ref('')
 const error = ref('')
 const success = ref('')
-const router = useRouter()
+const submitted = ref(false)
 
 const errors = reactive<{ email: string; password: string; confirmPassword: string }>({
   email: '',
@@ -159,19 +167,32 @@ async function handleRegister() {
 
   username.value = email.value.slice(0, email.value.indexOf('@'))
 
-  try {
-    const payload = {
-      email: email.value,
-      username: username.value,
-      password: password.value
-    }
-    const response = await registerUser(payload)
-    if (response) {
-      success.value = 'Регистрация прошла успешно! Перенаправляем на вход...'
-      router.push('/')
-    }
-  } catch (err) {
-    console.log(err)
+  const result = await registerUser({
+    email: email.value,
+    username: username.value,
+    password: password.value,
+  })
+
+  if (result.ok) {
+    submitted.value = true
+    success.value =
+        `Письмо со ссылкой подтверждения отправлено на ${email.value}. ` +
+        'Перейдите по ссылке из письма, чтобы активировать аккаунт.'
+    return
+  }
+
+  switch (result.error.code) {
+    case 'already_exists':
+      error.value = 'Пользователь с таким email уже существует.'
+      break
+    case 'validation':
+      error.value = result.error.message || 'Проверьте введённые данные.'
+      break
+    case 'network':
+      error.value = 'Сервер недоступен. Попробуйте позже.'
+      break
+    default:
+      error.value = result.error.message || 'Не удалось зарегистрироваться.'
   }
 }
 </script>
@@ -251,9 +272,26 @@ button:hover {
   font-weight: 600;
 }
 
-.success {
-  margin-top: 10px;
-  color: green;
+.success-block {
+  margin-top: 12px;
+  padding: 14px;
+  background: #ecfdf3;
+  border: 1px solid #a7e0b9;
+  border-radius: 6px;
+  color: #1f7a3a;
+  text-align: left;
+}
+
+.success-block .success-title {
+  margin: 0 0 6px;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.success-block a {
+  display: inline-block;
+  margin-top: 8px;
+  color: #1f7a3a;
   font-weight: 600;
 }
 </style>
