@@ -2,12 +2,14 @@ import axios from 'axios'
 import router from '@/router/index'
 import { useAuthStore } from '@/store/auth'
 
+const API_PREFIX = '/api'
+
 const instance = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
+    baseURL: import.meta.env.VITE_API_URL + API_PREFIX,
 })
 
 const refreshInstance = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
+    baseURL: import.meta.env.VITE_API_URL + API_PREFIX,
 })
 
 instance.interceptors.request.use(config => {
