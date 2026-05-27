@@ -225,6 +225,9 @@ input {
   box-sizing: border-box;
   border: 1px solid #ddd;
   border-radius: 4px;
+  color-scheme: light only;
+  background-color: #ffffff;
+  color: #213547;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 

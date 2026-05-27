@@ -279,6 +279,9 @@ onMounted(async () => {
   font-size: 14px;
   border: 1px solid #ddd;
   border-radius: 4px;
+  color-scheme: light only;
+  background-color: #ffffff;
+  color: #213547;
 }
 
 .resend-info {
