@@ -197,15 +197,26 @@ const onScroll = () => {
   selectedIndex.value = closestIndex;
 }
 
+function syncSelectedIndexFromTime(time: string) {
+  const currentTime = time?.trim() ? time : props.defaultTime
+  selectedIndex.value = getTimeIndex(currentTime)
+
+  if (!scrollWrapper.value || !scrollTrack.value) return
+  const el = scrollTrack.value.children[selectedIndex.value] as HTMLElement
+  el?.scrollIntoView({ inline: 'center', behavior: 'smooth' })
+}
+
+watch(
+    () => props.time,
+    (time) => {
+      if (!time?.trim()) return
+      syncSelectedIndexFromTime(time)
+    }
+)
+
 onMounted(async () => {
   setTimeout(async () => {
-    const currentTime = props.time && props.time.trim() !== ''
-        ? props.time
-        : props.defaultTime;
-    selectedIndex.value = await getTimeIndex(currentTime)
-    if (!scrollWrapper.value || !scrollTrack.value) return;
-    const el = scrollTrack.value.children[selectedIndex.value] as HTMLElement;
-    el.scrollIntoView({ inline: 'center', behavior: 'smooth' });
+    syncSelectedIndexFromTime(props.time ?? props.defaultTime)
 
     setTimeout(() => {
       isInitialized.value = true;

@@ -445,7 +445,7 @@ watch(
           </div>
           <time-zone-slider
             :key="studentTimezone?.id"
-            :time="roundedBrowserTime || form.time_start"
+            :time="form.time_start || roundedBrowserTime"
             :timezone="studentTimezone?.timezone"
             @selected-time="selectedTime"
           />

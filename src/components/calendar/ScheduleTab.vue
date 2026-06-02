@@ -8,9 +8,11 @@ import listPlugin from '@fullcalendar/list'
 import {
   DateSelectArg,
   EventClickArg,
+  EventDropArg,
   EventApi,
   EventInput,
 } from '@fullcalendar/core'
+import type { EventResizeDoneArg } from '@fullcalendar/interaction'
 import { DateTime } from 'luxon'
 
 import ScheduleFormModal from '@/components/calendar/ScheduleFormModal.vue'
@@ -36,6 +38,41 @@ const formModel = ref<EventDataCreate | null>(null)
 const editId = ref<number | null>(null)
 
 const selectedEvent = ref<EventData | null>(null)
+
+function buildEventPayload(event: EventApi): EventDataCreate {
+  const start = DateTime.fromJSDate(event.start!)
+  const end = DateTime.fromJSDate(event.end!)
+  const extendedProps = event.extendedProps
+
+  return {
+    title: event.title,
+    description: String(extendedProps.description ?? ''),
+    price: Number(extendedProps.price ?? 0),
+    currency_id: Number(extendedProps.currency_id ?? 1),
+    date_start: start.toFormat('yyyy-MM-dd'),
+    date_end: end.toFormat('yyyy-MM-dd'),
+    time_start: start.toFormat('HH:mm'),
+    time_end: end.toFormat('HH:mm'),
+    timezone_id: extendedProps.timezone?.id ?? extendedProps.student?.timezone?.id ?? null,
+    student_id: extendedProps.student?.id ?? null,
+  }
+}
+
+async function saveEventMove(event: EventApi, revert: () => void) {
+  const result = await calendarStore.patchEvent(buildEventPayload(event), event.id)
+
+  if (!result) {
+    revert()
+  }
+}
+
+async function handleEventDrop(dropInfo: EventDropArg) {
+  await saveEventMove(dropInfo.event, dropInfo.revert)
+}
+
+async function handleEventResize(resizeInfo: EventResizeDoneArg) {
+  await saveEventMove(resizeInfo.event, resizeInfo.revert)
+}
 
 /* ===================== CALENDAR HANDLERS ===================== */
 
@@ -145,6 +182,8 @@ const calendarOptions = ref<{
   weekends: boolean
   select: (info: DateSelectArg) => void
   eventClick: (info: EventClickArg) => void
+  eventDrop: (info: EventDropArg) => void
+  eventResize: (info: EventResizeDoneArg) => void
   eventsSet: (events: EventApi[]) => void
   eventDidMount: (info: any) => void
   events: (
@@ -169,6 +208,8 @@ const calendarOptions = ref<{
   weekends: true,
   select: handleDateSelect,
   eventClick: handleEventClick,
+  eventDrop: handleEventDrop,
+  eventResize: handleEventResize,
   eventsSet: () => {},
   eventDidMount: (info: any) => {
     const color = info.event.extendedProps?.student?.color || 'gray'
