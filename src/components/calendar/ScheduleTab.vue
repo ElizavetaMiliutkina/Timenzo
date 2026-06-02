@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { Notify } from 'quasar'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -10,9 +11,9 @@ import {
   EventClickArg,
   EventDropArg,
   EventApi,
-  EventInput,
+  CalendarOptions,
 } from '@fullcalendar/core'
-import type { EventResizeDoneArg } from '@fullcalendar/interaction'
+import type { EventDragStartArg, EventResizeDoneArg } from '@fullcalendar/interaction'
 import { DateTime } from 'luxon'
 
 import ScheduleFormModal from '@/components/calendar/ScheduleFormModal.vue'
@@ -20,7 +21,7 @@ import ShowEventModal from '@/components/calendar/ShowEventModal.vue'
 
 import { postEvent } from '@/services/calendar'
 import { useCalendarStore } from '@/store/calendar'
-import type { EventData, EventDataCreate, CalendarEvent } from '@/types/calendar'
+import type { EventData, EventDataCreate } from '@/types/calendar'
 
 /* ===================== STORE ===================== */
 
@@ -38,6 +39,44 @@ const formModel = ref<EventDataCreate | null>(null)
 const editId = ref<number | null>(null)
 
 const selectedEvent = ref<EventData | null>(null)
+const isCopyDrag = ref(false)
+const copyDropHandled = ref(false)
+let copyPlaceholderEl: HTMLElement | null = null
+
+function setCopyDragActive(active: boolean) {
+  const calendarEl = calendarRef.value?.$el as HTMLElement | undefined
+  calendarEl?.classList.toggle('fc-copy-drag-active', active)
+}
+
+function createCopyPlaceholder(sourceEl: HTMLElement) {
+  const harness = sourceEl.closest('.fc-daygrid-event-harness, .fc-timegrid-event-harness') as HTMLElement | null
+  const placeholder = sourceEl.cloneNode(true) as HTMLElement
+
+  placeholder.classList.add('fc-event-copy-placeholder')
+  placeholder.setAttribute('aria-hidden', 'true')
+
+  if (!harness) {
+    sourceEl.parentElement?.insertBefore(placeholder, sourceEl)
+    copyPlaceholderEl = placeholder
+    return
+  }
+
+  const placeholderHarness = document.createElement('div')
+  placeholderHarness.className = `${harness.className} fc-event-copy-placeholder-harness`
+  if (harness.style.cssText) {
+    placeholderHarness.style.cssText = harness.style.cssText
+  }
+  placeholderHarness.appendChild(placeholder)
+  harness.parentElement?.insertBefore(placeholderHarness, harness.nextSibling)
+  copyPlaceholderEl = placeholderHarness
+}
+
+function cleanupCopyDrag() {
+  copyPlaceholderEl?.remove()
+  copyPlaceholderEl = null
+  isCopyDrag.value = false
+  setCopyDragActive(false)
+}
 
 function buildEventPayload(event: EventApi): EventDataCreate {
   const start = DateTime.fromJSDate(event.start!)
@@ -66,7 +105,77 @@ async function saveEventMove(event: EventApi, revert: () => void) {
   }
 }
 
+function refetchCalendarEvents() {
+  calendarRef.value?.getApi()?.refetchEvents()
+}
+
+async function saveEventCopy(event: EventApi, revert: () => void) {
+  const payload = buildEventPayload(event)
+
+  cleanupCopyDrag()
+  revert()
+
+  const dismiss = Notify.create({
+    type: 'ongoing',
+    message: 'Copying lesson…',
+    spinner: true,
+    timeout: 0,
+  })
+
+  try {
+    const result = await postEvent(payload)
+
+    if (!result) {
+      Notify.create({
+        type: 'negative',
+        message: 'Failed to copy lesson',
+      })
+      return
+    }
+
+    Notify.create({
+      type: 'positive',
+      message: 'Lesson copied',
+      timeout: 2000,
+    })
+    refetchCalendarEvents()
+  } finally {
+    dismiss()
+  }
+}
+
+function handleEventDragStart(dragInfo: EventDragStartArg) {
+  const isCopy = dragInfo.jsEvent.altKey
+  isCopyDrag.value = isCopy
+  copyDropHandled.value = false
+
+  if (!isCopy) return
+
+  setCopyDragActive(true)
+  createCopyPlaceholder(dragInfo.el)
+}
+
+function handleEventDragStop() {
+  if (!isCopyDrag.value) return
+
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      if (!copyDropHandled.value) {
+        cleanupCopyDrag()
+      }
+    })
+  })
+}
+
 async function handleEventDrop(dropInfo: EventDropArg) {
+  const shouldCopy = isCopyDrag.value || dropInfo.jsEvent.altKey
+
+  if (shouldCopy) {
+    copyDropHandled.value = true
+    await saveEventCopy(dropInfo.event, dropInfo.revert)
+    return
+  }
+
   await saveEventMove(dropInfo.event, dropInfo.revert)
 }
 
@@ -169,29 +278,7 @@ async function onSubmitForm(data: EventDataCreate) {
 
 /* ===================== CALENDAR OPTIONS ===================== */
 
-const calendarOptions = ref<{
-  plugins: any[]
-  firstDay:number
-  headerToolbar: Record<string, string>
-  initialView: string
-  initialEvents: EventInput[]
-  editable: boolean
-  selectable: boolean
-  selectMirror: boolean
-  dayMaxEvents: boolean
-  weekends: boolean
-  select: (info: DateSelectArg) => void
-  eventClick: (info: EventClickArg) => void
-  eventDrop: (info: EventDropArg) => void
-  eventResize: (info: EventResizeDoneArg) => void
-  eventsSet: (events: EventApi[]) => void
-  eventDidMount: (info: any) => void
-  events: (
-      info: CalendarEvent,
-      successCallback: (events: EventData[]) => void,
-      failureCallback: (error: any) => void
-  ) => void
-}>({
+const calendarOptions = ref<CalendarOptions>({
   firstDay:1,
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
   headerToolbar: {
@@ -204,10 +291,13 @@ const calendarOptions = ref<{
   editable: true,
   selectable: true,
   selectMirror: true,
+  dragRevertDuration: 0,
   dayMaxEvents: true,
   weekends: true,
   select: handleDateSelect,
   eventClick: handleEventClick,
+  eventDragStart: handleEventDragStart,
+  eventDragStop: handleEventDragStop,
   eventDrop: handleEventDrop,
   eventResize: handleEventResize,
   eventsSet: () => {},
@@ -223,7 +313,7 @@ const calendarOptions = ref<{
 
       await calendarStore.getEvents(start, end)
       successCallback(calendarStore.events)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching events:', error)
       failureCallback(error)
     }
@@ -263,5 +353,28 @@ const calendarOptions = ref<{
 <style scoped>
 b {
   margin-right: 3px;
+}
+
+.demo-app-calendar :deep(.fc-copy-drag-active .fc-event-mirror) {
+  opacity: 0.85;
+  outline: 2px dashed #1976d2;
+  outline-offset: 1px;
+}
+
+.demo-app-calendar :deep(.fc-copy-drag-active .fc-event-dragging:not(.fc-event-mirror):not(.fc-event-copy-placeholder)) {
+  opacity: 0.75;
+  outline: 2px dashed #1976d2;
+  outline-offset: 1px;
+}
+
+.demo-app-calendar :deep(.fc-event-copy-placeholder) {
+  opacity: 0.55;
+  pointer-events: none;
+  filter: saturate(0.85);
+}
+
+.demo-app-calendar :deep(.fc-event-copy-placeholder-harness) {
+  pointer-events: none;
+  z-index: 5;
 }
 </style>

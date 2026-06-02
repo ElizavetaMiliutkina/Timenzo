@@ -26,6 +26,22 @@ export const useCalendarStore = defineStore('calendar', {
         graphPeriod: 3,
     }),
     actions: {
+        async refreshPeriodEvents(): Promise<EventData[]> {
+            try {
+                const now = new Date()
+                const startDate = subYears(now, 1)
+                const endPeriod = format(now, "yyyy-MM-dd'T'HH:mm:ss")
+                const startPeriod = format(startDate, "yyyy-MM-dd'T'HH:mm:ss")
+                const response = await axios.get<EventData[]>('/events', {
+                    params: { start: startPeriod, end: endPeriod, completed: false },
+                })
+                this.periodEvents = response.data
+                return this.periodEvents
+            } catch (error) {
+                console.error('Error fetching period events:', error)
+                return []
+            }
+        },
         async getEvents(start: string, end: string): Promise<EventData[]> {
             try {
                 this.lastEventPayload.start = start
@@ -33,13 +49,7 @@ export const useCalendarStore = defineStore('calendar', {
                 const response = await axios.get<EventData[]>(`/events?start=${start}&end=${end}`)
                 this.events = response.data
 
-                const now = new Date()
-                const startDate = subYears(now, 1)
-
-                const endPeriod = format(now, "yyyy-MM-dd'T'HH:mm:ss")
-                const startPeriod = format(startDate, "yyyy-MM-dd'T'HH:mm:ss")
-
-                this.periodEvents = await this.getPeriodEvents(startPeriod, endPeriod, false)
+                await this.refreshPeriodEvents()
                 return response.data
             } catch (error) {
                 console.error('Error fetching events:', error)
@@ -65,7 +75,11 @@ export const useCalendarStore = defineStore('calendar', {
         async patchEvent(payload: EventDataCreate, id: number | string): Promise<EventData | null> {
             try {
                 const response = await axios.patch<EventData>(`/events/${id}`, payload)
-                this.events[this.events.findIndex((event) => event.id === response.data.id)] = response.data
+                const index = this.events.findIndex((event) => event.id === response.data.id)
+                if (index !== -1) {
+                    this.events[index] = response.data
+                }
+                await this.refreshPeriodEvents()
                 return response.data
             } catch (error) {
                 console.error('Error fetching events:', error)

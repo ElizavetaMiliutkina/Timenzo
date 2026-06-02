@@ -4,7 +4,7 @@ import '@/styles/custom-scrollbar.scss';
 import App from './App.vue';
 import router from '@/router/index.js';
 import { createPinia } from 'pinia';
-import { Quasar, Dark, Dialog } from 'quasar';
+import { Quasar, Dark, Dialog, Notify } from 'quasar';
 import 'quasar/src/css/index.sass';
 import '@quasar/extras/material-icons/material-icons.css';
 
@@ -14,7 +14,7 @@ app.use(router);
 app.use(createPinia());
 
 app.use(Quasar, {
-    plugins: { Dark, Dialog },
+    plugins: { Dark, Dialog, Notify },
 });
 
 Dark.set(false);
