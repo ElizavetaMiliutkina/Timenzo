@@ -18,8 +18,9 @@ import { DateTime } from 'luxon'
 
 import ScheduleFormModal from '@/components/calendar/ScheduleFormModal.vue'
 import ShowEventModal from '@/components/calendar/ShowEventModal.vue'
+import SpreadModal from '@/components/calendar/SpreadModal.vue'
 
-import { postEvent } from '@/services/calendar'
+import { postEvent, spreadEvent } from '@/services/calendar'
 import { useCalendarStore } from '@/store/calendar'
 import type { EventData, EventDataCreate } from '@/types/calendar'
 
@@ -43,6 +44,56 @@ const isCopyDrag = ref(false)
 const copyDropHandled = ref(false)
 let copyPlaceholderEl: HTMLElement | null = null
 
+const isSpreadModalOpen = ref(false)
+const spreadSource = ref<{ id: number; title: string } | null>(null)
+
+function openSpreadModal(event: { id: string; title: string }, e: Event) {
+  e.preventDefault()
+  e.stopPropagation()
+  spreadSource.value = {
+    id: Number(event.id),
+    title: event.title,
+  }
+  isSpreadModalOpen.value = true
+}
+
+async function onSpreadConfirm(payload: { weeks: number; weekdays: number[] }) {
+  if (!spreadSource.value) return
+
+  const dismiss = Notify.create({
+    type: 'ongoing',
+    message: 'Spreading lessons…',
+    spinner: true,
+    timeout: 0,
+  })
+
+  try {
+    const result = await spreadEvent({
+      event_id: spreadSource.value.id,
+      weeks: payload.weeks,
+      weekdays: payload.weekdays,
+    })
+
+    if (!result) {
+      Notify.create({
+        type: 'negative',
+        message: 'Failed to spread lessons',
+      })
+      return
+    }
+
+    Notify.create({
+      type: 'positive',
+      message: `Created ${result.created_count} lesson${result.created_count === 1 ? '' : 's'}`,
+      timeout: 2500,
+    })
+    refetchCalendarEvents()
+    await calendarStore.refreshPeriodEvents()
+  } finally {
+    dismiss()
+    spreadSource.value = null
+  }
+}
 function setCopyDragActive(active: boolean) {
   const calendarEl = calendarRef.value?.$el as HTMLElement | undefined
   calendarEl?.classList.toggle('fc-copy-drag-active', active)
@@ -328,9 +379,26 @@ const calendarOptions = ref<CalendarOptions>({
     :options="calendarOptions"
   >
     <template #eventContent="{ event, timeText }">
-      <b>{{ timeText }}</b>
-      <b>{{ event.extendedProps?.student?.name ?? '—' }}</b> -
-      <i>{{ event.title }}</i>
+      <div class="fc-event-row">
+        <div class="fc-event-row__body">
+          <b>{{ timeText }}</b>
+          <b>{{ event.extendedProps?.student?.name ?? '—' }}</b> -
+          <i>{{ event.title }}</i>
+        </div>
+        <q-btn
+          class="fc-event-row__spread"
+          flat
+          dense
+          round
+          size="xs"
+          icon="content_copy"
+          @mousedown.stop
+          @mouseup.stop
+          @click="openSpreadModal(event, $event)"
+        >
+          <q-tooltip>Spread to weeks</q-tooltip>
+        </q-btn>
+      </div>
     </template>
   </FullCalendar>
 
@@ -348,11 +416,39 @@ const calendarOptions = ref<CalendarOptions>({
     @edit="editEventForm"
     @delete="deleteEvent"
   />
+
+  <SpreadModal
+    v-model="isSpreadModalOpen"
+    :event-title="spreadSource?.title"
+    @confirm="onSpreadConfirm"
+  />
 </template>
 
 <style scoped>
 b {
   margin-right: 3px;
+}
+
+.fc-event-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+
+.fc-event-row__body {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fc-event-row__spread {
+  flex-shrink: 0;
+  color: inherit;
+  opacity: 0.85;
 }
 
 .demo-app-calendar :deep(.fc-copy-drag-active .fc-event-mirror) {

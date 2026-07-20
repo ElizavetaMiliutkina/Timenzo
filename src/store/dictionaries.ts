@@ -9,13 +9,15 @@ export const useDictionariesStore = defineStore('dictionaries', {
     }),
 
     actions: {
-        async fetchCurrencies() {
+        /** force=true — сбросить кэш и забрать заново (после правок справочника и т.п.) */
+        async fetchCurrencies(force = false) {
+            if (!force && this.currencies.length) return
             if (this.loading) return
 
+            this.loading = true
             try {
                 const { data } = await axios.get<Currency[]>('/currencies')
                 this.currencies = data
-                this.loading = true
             } catch (error) {
                 console.error('Error fetching currencies:', error)
             } finally {

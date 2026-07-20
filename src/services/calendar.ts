@@ -44,3 +44,27 @@ export const incomeGraph = async (period: number) => {
     }
 }
 
+export interface SpreadEventPayload {
+    event_id: number
+    weeks: number
+    weekdays: number[]
+}
+
+export interface SpreadEventResult {
+    message: string
+    created_count: number
+    event_ids: number[]
+}
+
+export const spreadEvent = async (
+    payload: SpreadEventPayload
+): Promise<SpreadEventResult | null> => {
+    try {
+        const { data } = await axios.post<SpreadEventResult>('/events/spread', payload)
+        return data
+    } catch (error) {
+        console.error('Error spreading events', error)
+        return null
+    }
+}
+
