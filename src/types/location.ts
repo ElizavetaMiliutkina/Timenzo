@@ -22,4 +22,5 @@ export interface LocationOption {
     label: string;
     lat: number;
     lon: number;
+    timezone: string;
 }

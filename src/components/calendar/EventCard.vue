@@ -1,12 +1,20 @@
 <script setup lang="ts">
-import { startOfDay, endOfDay, format, parseISO } from 'date-fns'
+import { startOfDay, endOfDay, format, parseISO, isWithinInterval } from 'date-fns'
 import { useCalendarStore } from '@/store/calendar'
-import { onMounted, ref, watch } from 'vue'
-import type { EventData } from '@/types/calendar'
+import { computed } from 'vue'
 
 const calendarStore = useCalendarStore()
 
-const todayEvents = ref<EventData[] | []>([])
+/** Сегодняшние незавершённые — из уже загруженного periodEvents, без отдельного /events */
+const todayEvents = computed(() => {
+  const now = new Date()
+  const interval = { start: startOfDay(now), end: endOfDay(now) }
+
+  return calendarStore.periodEvents.filter((event) => {
+    const start = parseISO(event.start)
+    return isWithinInterval(start, interval)
+  })
+})
 
 const completeEv = async (id: string) => {
   const response = await calendarStore.completeEvent(id)
@@ -15,28 +23,8 @@ const completeEv = async (id: string) => {
   }
 }
 const deleteEv = async (id: string) => {
-  const response = await calendarStore.deleteEvent(id)
-  if (response) {
-    await calendarStore.reloadEvents()
-  }
+  await calendarStore.deleteEvent(id)
 }
-
-const getTodayEvents = async () => {
-  const now = new Date()
-
-  const start = format(startOfDay(now), "yyyy-MM-dd'T'HH:mm:ss")
-  const end = format(endOfDay(now), "yyyy-MM-dd'T'HH:mm:ss")
-  todayEvents.value = await calendarStore.getPeriodEvents(start, end)
-}
-
-watch(() => calendarStore.periodEvents, () => {
-  getTodayEvents()
-})
-
-onMounted(() => {
-  getTodayEvents()
-})
-
 </script>
 
 <template>
@@ -94,7 +82,7 @@ onMounted(() => {
             >
               {{ index + 1 }}
             </q-badge>
-            {{ format(event.start, 'HH:mm') }}-{{ format(event.end, 'HH:mm') }}
+            {{ format(parseISO(event.start), 'HH:mm') }}-{{ format(parseISO(event.end), 'HH:mm') }}
           </b>
           <br>
           <div class="q-ml-lg">

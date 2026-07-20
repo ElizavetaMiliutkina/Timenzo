@@ -24,9 +24,10 @@ function onLogout() {
         <q-item
           v-close-popup
           clickable
+          to="/settings"
         >
           <q-item-section>
-            <q-item-label class="disabled">
+            <q-item-label>
               Settings
             </q-item-label>
           </q-item-section>

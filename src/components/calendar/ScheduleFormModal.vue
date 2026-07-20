@@ -11,6 +11,7 @@ import TimePeriod from '@/components/TimePeriod.vue'
 
 import { useDictionariesStore } from '@/store/dictionaries'
 import {useStudentStore} from "@/store/students";
+import { useSettingsStore } from '@/store/settings'
 import {Student, Timezone} from "@/types/students";
 import LocationSelect from "@/components/LocationSelect.vue";
 import { useUnsavedClose } from '@/composables/useUnsavedClose'
@@ -20,8 +21,10 @@ const { confirmCloseIfDirty } = useUnsavedClose()
 const { students } = storeToRefs(studentStore)
 const selectedStudent = ref<Student | null>(null)
 const studentTimezone = ref<Timezone|null>(null)
-const browserTimezone = DateTime.local().zoneName
 const selectStudentMode = ref(true)
+
+const settingsStore = useSettingsStore()
+const { resolvedTimezone: userTimezone } = storeToRefs(settingsStore)
 
 const props = defineProps<{
   modelValue: boolean
@@ -101,13 +104,20 @@ function onDialogDismissRequest(open: boolean) {
 
 /* ===================== SYNC FROM PARENT ===================== */
 
+function resolveStudent(student: Student | null | undefined): Student | null {
+  if (!student) return null
+  return students.value.find((s) => s.id === student.id) ?? student
+}
+
 watch(
-    () => props.model,
-    (model) => {
-      if (!model) return
-      if(!model.student && props.mode === 'edit') selectStudentMode.value = false
-      selectedStudent.value = model.student || null
-      studentTimezone.value = model.timezone || null
+    () => [props.model, props.mode, props.modelValue] as const,
+    ([model, mode, open]) => {
+      if (!open || !model) return
+
+      // edit + student → список студентов; edit без студента → локация; create → студенты
+      selectStudentMode.value = mode === 'edit' ? !!model.student : true
+      selectedStudent.value = resolveStudent(model.student)
+      studentTimezone.value = model.timezone || selectedStudent.value?.timezone || null
       form.value = { ...model }
       syncDurationFromForm()
     },
@@ -231,24 +241,31 @@ watch(selectedStudent, (student, oldStudent) => {
   studentTimezone.value = student.timezone
 })
 
-const browserTimeDisplay = computed(() => {
-  if (!form.value.time_start || !form.value.date_start) return ''
+// Когда студенты подгрузились асинхронно — подставить тот же объект из options для q-select
+watch(students, (list) => {
+  if (!selectedStudent.value || !list.length) return
+  const matched = list.find((s) => s.id === selectedStudent.value!.id)
+  if (matched && matched !== selectedStudent.value) {
+    selectedStudent.value = matched
+  }
+})
 
+const browserTimeDisplay = computed(() => {
   return DateTime.now()
-      .setZone(browserTimezone) // текущий час в таймзоне студента
-      .toFormat('HH:mm') // только часы и минуты
+      .setZone(userTimezone.value)
+      .toFormat('HH:mm')
 })
 
 const studentTimeDisplay = computed(() => {
   if (!studentTimezone.value?.timezone) return ''
 
   return DateTime.now()
-      .setZone(studentTimezone.value?.timezone) // текущий час в таймзоне студента
-      .toFormat('HH:mm') // только часы и минуты
+      .setZone(studentTimezone.value?.timezone)
+      .toFormat('HH:mm')
 })
 
 const roundedBrowserTime = computed(() => {
-  const now = DateTime.now()
+  const now = DateTime.now().setZone(userTimezone.value)
   const minutes = now.minute
   const roundedMinutes = Math.round(minutes / 30) * 30
 
@@ -444,9 +461,10 @@ watch(
             </div>
           </div>
           <time-zone-slider
-            :key="studentTimezone?.id"
+            :key="`${studentTimezone?.id}-${userTimezone}`"
             :time="form.time_start || roundedBrowserTime"
             :timezone="studentTimezone?.timezone"
+            :local-timezone="userTimezone"
             @selected-time="selectedTime"
           />
           <div class="time-info-block">

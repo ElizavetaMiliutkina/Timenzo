@@ -74,6 +74,11 @@ const props  = defineProps({
     type: String,
     default: '',
   },
+  /** Базовая «ваша» таймзона (настройки пользователя или браузер). */
+  localTimezone: {
+    type: String,
+    default: '',
+  },
 })
 
 const emit = defineEmits(['selectedTime'])
@@ -83,7 +88,13 @@ const scrollTrack = ref<HTMLElement | null>(null);
 
 const selectedIndex = ref(13);
 const isInitialized = ref(false);
-const browserTimezone = DateTime.local().zoneName
+
+const localTimezoneResolved = computed(() => {
+  if (props.localTimezone) {
+    return props.localTimezone
+  }
+  return DateTime.local().zoneName
+})
 
 const resolvedTimezone = computed(() => {
   // если пришёл таймзон студента (например America/New_York)
@@ -91,8 +102,8 @@ const resolvedTimezone = computed(() => {
     return props.timezone
   }
 
-  // fallback — таймзона браузера
-  return DateTime.local().zoneName
+  // fallback — таймзона пользователя / браузера
+  return localTimezoneResolved.value
 })
 
 const getTimeIndex = (time: string): number => {
@@ -113,9 +124,9 @@ const timeLabels = computed(() => {
 
 const gmtLabel = computed(() => {
   const studentOffset = DateTime.now().setZone(resolvedTimezone.value).offset
-  const browserOffset = DateTime.now().setZone(browserTimezone).offset
+  const localOffset = DateTime.now().setZone(localTimezoneResolved.value).offset
 
-  const diffMinutes = studentOffset - browserOffset
+  const diffMinutes = studentOffset - localOffset
   const sign = diffMinutes >= 0 ? '+' : '-'
   const hours = Math.abs(diffMinutes) / 60
 
@@ -130,7 +141,8 @@ const timeLabelsGmt = computed(() => {
     const minutes = i * slotMinutes
 
     return DateTime
-        .local()
+        .now()
+        .setZone(localTimezoneResolved.value)
         .startOf('day')
         .plus({ minutes })
         .setZone(resolvedTimezone.value)
@@ -142,9 +154,10 @@ const localTimeDisplay = computed(() => {
   const minutes = selectedIndex.value * props.slot * 60
 
   return DateTime
-      .local()              // ⬅️ БЕРЁМ СЕГОДНЯ И ТАЙМЗОНУ БРАУЗЕРА
-      .startOf('day')       // ⬅️ ПОЛНОЧЬ СЕГОДНЯ
-      .plus({ minutes })    // ⬅️ СЛОТ
+      .now()
+      .setZone(localTimezoneResolved.value)
+      .startOf('day')
+      .plus({ minutes })
       .toFormat('HH:mm')
 })
 
@@ -161,7 +174,8 @@ const gmtTimeDisplay = computed(() => {
   const minutes = selectedIndex.value * props.slot * 60
 
   return DateTime
-      .local()
+      .now()
+      .setZone(localTimezoneResolved.value)
       .startOf('day')
       .plus({ minutes })
       .setZone(resolvedTimezone.value)

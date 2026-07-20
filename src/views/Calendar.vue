@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { useCalendarStore } from '@/store/calendar'
 import ScheduleTab from "@/components/calendar/ScheduleTab.vue";
 import EventCard from "@/components/calendar/EventCard.vue";
 import GraphTab from "@/components/calendar/GraphTab.vue";
+
 const calendarStore = useCalendarStore()
 
-onMounted(async () => {
-  const start = format(startOfMonth(new Date()), 'yyyy-MM-dd')
-  const end = format(endOfMonth(new Date()), 'yyyy-MM-dd')
-  await calendarStore.getEvents(start, end)
+onMounted(() => {
+  // Сайдбар «All Events» — один раз; сетку грузит FullCalendar сам
+  calendarStore.refreshPeriodEvents()
 })
 
 const tab = ref('schedule')

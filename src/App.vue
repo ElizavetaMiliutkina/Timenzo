@@ -1,10 +1,25 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, watch, onMounted } from "vue";
 import Navbar from "@/components/navbar/Navbar.vue";
 import { useAuthStore } from "@/store/auth";
+import { useSettingsStore } from "@/store/settings";
 
 const authStore = useAuthStore();
+const settingsStore = useSettingsStore();
 const isAuthenticated = computed(() => !!authStore.accessToken);
+
+async function ensureSettings() {
+  if (isAuthenticated.value && !settingsStore.loaded) {
+    await settingsStore.fetchSettings();
+  }
+}
+
+onMounted(ensureSettings);
+watch(isAuthenticated, (ok) => {
+  if (ok) {
+    settingsStore.fetchSettings();
+  }
+});
 </script>
 
 <template>

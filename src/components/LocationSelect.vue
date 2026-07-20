@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { getLocations } from "@/services/dictionaries";
 import debounce from 'lodash/debounce'
 import type {LocationOption} from "@/types/location"
 
 const props = defineProps<{
   modelValue: LocationOption | null
+  required?: boolean
 }>()
 
 const emit = defineEmits(['update:modelValue'])
@@ -42,10 +43,15 @@ async function onFilter(val: string, update: (cb: () => void) => void) {
   update(() => {})
 }
 
-function onSelect(val: LocationOption) {
+function onSelect(val: LocationOption | null) {
   selectedLocation.value = val
   emit('update:modelValue', val);
 }
+
+const locationRules = computed(() => {
+  if (!props.required) return []
+  return [(val: LocationOption | null) => !!val || 'Enter your city']
+})
 </script>
 
 <template>
@@ -56,10 +62,10 @@ function onSelect(val: LocationOption) {
       clearable
       input-debounce="0"
       :options="locationSuggestions"
-      :rules="[val => !!val || 'Enter your city']"
+      :rules="locationRules"
       option-label="label"
       option-value="value"
-      label="Enter your city... *"
+      :label="!props.required ? 'Enter your city...' : 'Enter your city... *'"
       square
       filled
       @filter="onFilter"

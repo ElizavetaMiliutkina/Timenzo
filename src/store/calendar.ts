@@ -48,27 +48,9 @@ export const useCalendarStore = defineStore('calendar', {
                 this.lastEventPayload.end = end
                 const response = await axios.get<EventData[]>(`/events?start=${start}&end=${end}`)
                 this.events = response.data
-
-                await this.refreshPeriodEvents()
                 return response.data
             } catch (error) {
                 console.error('Error fetching events:', error)
-                return []
-            }
-        },
-        async getPeriodEvents(start: string, end: string, completed?: boolean): Promise<EventData[]> {
-            try {
-                this.lastEventPayload.start = start
-                this.lastEventPayload.end = end
-                const params: Record<string, any> = { start, end }
-
-                if (completed !== undefined) {
-                    params.completed = completed
-                }
-                const response = await axios.get<EventData[]>('/events', { params })
-                return response.data
-            } catch (error) {
-                console.error('Error fetching period events:', error)
                 return []
             }
         },
@@ -90,7 +72,10 @@ export const useCalendarStore = defineStore('calendar', {
             try {
                 const response = await axios.patch<EventData[]>(`/events/${id}/complete`)
                 this.events = response.data
-                await this.incomeGraph(this.graphPeriod)
+                await Promise.all([
+                    this.refreshPeriodEvents(),
+                    this.incomeGraph(this.graphPeriod),
+                ])
                 return response.data
             } catch (error) {
                 console.error('Error fetching events:', error)
@@ -108,7 +93,10 @@ export const useCalendarStore = defineStore('calendar', {
         async deleteEvent(id: string | number) {
             try {
                 const response = await axios.delete(`/events/${id}`)
-                await this.reloadEvents()
+                await Promise.all([
+                    this.reloadEvents(),
+                    this.refreshPeriodEvents(),
+                ])
                 return response
             } catch (error) {
                 console.error('Error fetching events:', error)
@@ -123,7 +111,7 @@ export const useCalendarStore = defineStore('calendar', {
             } catch (error: any) {
                 Notify.create({
                     type: 'negative',
-                    message: error.message || 'Ошибка загрузки графика'
+                    message: error.message || 'Error loading chart'
                 })
                 throw error
             }
