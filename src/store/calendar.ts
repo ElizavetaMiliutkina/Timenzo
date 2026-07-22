@@ -5,6 +5,9 @@ import { Notify } from 'quasar'
 import axios from "@/plugins/axios";
 import {format, subYears} from "date-fns";
 
+/** In-flight dedupe для одинаковых GET /events (FullCalendar иногда дёргает events дважды). */
+const eventsInflight = new Map<string, Promise<EventData[]>>()
+
 export const useCalendarStore = defineStore('calendar', {
     state: (): {
         events: EventData[]
@@ -43,16 +46,29 @@ export const useCalendarStore = defineStore('calendar', {
             }
         },
         async getEvents(start: string, end: string): Promise<EventData[]> {
-            try {
-                this.lastEventPayload.start = start
-                this.lastEventPayload.end = end
-                const response = await axios.get<EventData[]>(`/events?start=${start}&end=${end}`)
-                this.events = response.data
-                return response.data
-            } catch (error) {
-                console.error('Error fetching events:', error)
-                return []
+            const key = `${start}|${end}`
+            const existing = eventsInflight.get(key)
+            if (existing) {
+                return existing
             }
+
+            const request = (async () => {
+                try {
+                    this.lastEventPayload.start = start
+                    this.lastEventPayload.end = end
+                    const response = await axios.get<EventData[]>(`/events?start=${start}&end=${end}`)
+                    this.events = response.data
+                    return response.data
+                } catch (error) {
+                    console.error('Error fetching events:', error)
+                    return []
+                } finally {
+                    eventsInflight.delete(key)
+                }
+            })()
+
+            eventsInflight.set(key, request)
+            return request
         },
         async patchEvent(payload: EventDataCreate, id: number | string): Promise<EventData | null> {
             try {
@@ -61,7 +77,8 @@ export const useCalendarStore = defineStore('calendar', {
                 if (index !== -1) {
                     this.events[index] = response.data
                 }
-                await this.refreshPeriodEvents()
+                // сайдбар обновляем без блокировки PATCH
+                void this.refreshPeriodEvents()
                 return response.data
             } catch (error) {
                 console.error('Error fetching events:', error)

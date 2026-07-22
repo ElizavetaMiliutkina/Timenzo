@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import { Notify } from 'quasar'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list'
+import luxonPlugin from '@fullcalendar/luxon3'
 import {
   DateSelectArg,
   EventClickArg,
@@ -22,11 +24,13 @@ import SpreadModal from '@/components/calendar/SpreadModal.vue'
 
 import { postEvent, spreadEvent } from '@/services/calendar'
 import { useCalendarStore } from '@/store/calendar'
+import { useSettingsStore } from '@/store/settings'
 import type { EventData, EventDataCreate } from '@/types/calendar'
-
-/* ===================== STORE ===================== */
+import { jsDateToZoneParts } from '@/utils/datetimeZone'
 
 const calendarStore = useCalendarStore()
+const settingsStore = useSettingsStore()
+const { resolvedTimezone: userTimezone } = storeToRefs(settingsStore)
 
 /* ===================== UI STATE ===================== */
 
@@ -130,8 +134,13 @@ function cleanupCopyDrag() {
 }
 
 function buildEventPayload(event: EventApi): EventDataCreate {
-  const start = DateTime.fromJSDate(event.start!)
-  const end = DateTime.fromJSDate(event.end!)
+  const zone = userTimezone.value
+  const startParts = event.start
+    ? jsDateToZoneParts(event.start, zone)
+    : { date: '', time: '00:00' }
+  const endParts = event.end
+    ? jsDateToZoneParts(event.end, zone)
+    : startParts
   const extendedProps = event.extendedProps
 
   return {
@@ -139,10 +148,10 @@ function buildEventPayload(event: EventApi): EventDataCreate {
     description: String(extendedProps.description ?? ''),
     price: Number(extendedProps.price ?? 0),
     currency_id: Number(extendedProps.currency_id ?? 1),
-    date_start: start.toFormat('yyyy-MM-dd'),
-    date_end: end.toFormat('yyyy-MM-dd'),
-    time_start: start.toFormat('HH:mm'),
-    time_end: end.toFormat('HH:mm'),
+    date_start: startParts.date,
+    date_end: endParts.date,
+    time_start: startParts.time,
+    time_end: endParts.time,
     timezone_id: extendedProps.timezone?.id ?? extendedProps.student?.timezone?.id ?? null,
     student_id: extendedProps.student?.id ?? null,
   }
@@ -238,11 +247,12 @@ async function handleEventResize(resizeInfo: EventResizeDoneArg) {
 
 function handleDateSelect(selectInfo: DateSelectArg) {
   const isAllDay = !selectInfo.startStr.includes('T')
+  const zone = userTimezone.value
 
-  const start = DateTime.fromISO(selectInfo.startStr)
+  const start = DateTime.fromISO(selectInfo.startStr, { setZone: true }).setZone(zone)
   const end = isAllDay
-      ? DateTime.fromISO(selectInfo.endStr).minus({ days: 1 })
-      : DateTime.fromISO(selectInfo.endStr)
+      ? DateTime.fromISO(selectInfo.endStr, { setZone: true }).setZone(zone).minus({ days: 1 })
+      : DateTime.fromISO(selectInfo.endStr, { setZone: true }).setZone(zone)
 
   mode.value = 'create'
   editId.value = null
@@ -270,15 +280,16 @@ function handleEventClick(clickInfo: EventClickArg) {
   selectedEvent.value = {
     id: event.id,
     title: event.title,
-    start: event.startStr,
-    end: event.endStr,
+    // Абсолютный UTC-момент
+    start: event.start ? event.start.toISOString() : event.startStr,
+    end: event.end ? event.end.toISOString() : event.endStr,
     extendedProps: {
       price: Number(event.extendedProps.price ?? 0),
       description: String(event.extendedProps.description ?? ''),
       currency_id: Number(event.extendedProps.currency_id ?? 1),
       completed: Boolean(event.extendedProps.completed ?? false),
       student: event.extendedProps.student ?? null,
-      timezone: event.extendedProps.timezone ?? null,
+      timezone: event.extendedProps.timezone ?? event.extendedProps.student?.timezone ?? null,
     },
   }
 
@@ -293,6 +304,15 @@ function editEventForm(data: EventDataCreate, id: number) {
   isEventModalOpen.value = false
   isFormModalOpen.value = true
 }
+
+// setOption('timeZone') сам перезагружает events — без лишнего refetchEvents
+watch(userTimezone, (zone, prev) => {
+  if (!zone || zone === prev) return
+  const api = calendarRef.value?.getApi?.()
+  if (!api) return
+  api.setOption('timeZone', zone)
+  calendarStore.refreshPeriodEvents()
+})
 
 async function deleteEvent(id: number) {
   try {
@@ -331,7 +351,8 @@ async function onSubmitForm(data: EventDataCreate) {
 
 const calendarOptions = ref<CalendarOptions>({
   firstDay:1,
-  plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
+  plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin, luxonPlugin],
+  timeZone: userTimezone.value,
   headerToolbar: {
     left: 'prev,next today',
     center: 'title',
@@ -359,8 +380,9 @@ const calendarOptions = ref<CalendarOptions>({
   },
   events: async (info, successCallback, failureCallback) => {
     try {
-      const start = DateTime.fromJSDate(info.start).toFormat('yyyy-MM-dd')
-      const end = DateTime.fromJSDate(info.end).toFormat('yyyy-MM-dd')
+      const zone = userTimezone.value
+      const start = DateTime.fromJSDate(info.start, { zone: 'utc' }).setZone(zone).toFormat('yyyy-MM-dd')
+      const end = DateTime.fromJSDate(info.end, { zone: 'utc' }).setZone(zone).toFormat('yyyy-MM-dd')
 
       await calendarStore.getEvents(start, end)
       successCallback(calendarStore.events)
@@ -370,10 +392,22 @@ const calendarOptions = ref<CalendarOptions>({
     }
   },
 })
+
+// До маунта FullCalendar подставляем актуальную TZ (options иначе снимок с browser fallback)
+watch(
+  () => settingsStore.loaded,
+  (loaded) => {
+    if (!loaded) return
+    calendarOptions.value.timeZone = userTimezone.value
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
+  <!-- Ждём Settings, чтобы не было: mount → fetch, потом TZ → setOption → ещё fetch(+ы) -->
   <FullCalendar
+    v-if="settingsStore.loaded"
     ref="calendarRef"
     class="demo-app-calendar"
     :options="calendarOptions"

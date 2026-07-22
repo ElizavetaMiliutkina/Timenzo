@@ -1,20 +1,32 @@
 <script setup lang="ts">
-import { startOfDay, endOfDay, format, parseISO, isWithinInterval } from 'date-fns'
+import { DateTime } from 'luxon'
 import { useCalendarStore } from '@/store/calendar'
+import { useSettingsStore } from '@/store/settings'
 import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
 
 const calendarStore = useCalendarStore()
+const settingsStore = useSettingsStore()
+const { resolvedTimezone: userTimezone } = storeToRefs(settingsStore)
 
-/** Сегодняшние незавершённые — из уже загруженного periodEvents, без отдельного /events */
+function eventInZone(iso: string) {
+  return DateTime.fromISO(iso, { zone: 'utc' }).setZone(userTimezone.value)
+}
+
 const todayEvents = computed(() => {
-  const now = new Date()
-  const interval = { start: startOfDay(now), end: endOfDay(now) }
-
-  return calendarStore.periodEvents.filter((event) => {
-    const start = parseISO(event.start)
-    return isWithinInterval(start, interval)
-  })
+  const today = DateTime.now().setZone(userTimezone.value).toISODate()
+  return calendarStore.periodEvents.filter(
+    (event) => eventInZone(event.start).toISODate() === today
+  )
 })
+
+function formatEventDay(iso: string) {
+  return eventInZone(iso).toFormat('dd.MM')
+}
+
+function formatEventTime(iso: string) {
+  return eventInZone(iso).toFormat('HH:mm')
+}
 
 const completeEv = async (id: string) => {
   const response = await calendarStore.completeEvent(id)
@@ -29,7 +41,6 @@ const deleteEv = async (id: string) => {
 
 <template>
   <div class="event-card">
-    <!-- Верх: flex:1 + min-height:0 — список скроллится, не съедая нижний блок -->
     <div class="event-card__top">
       <h2 class="event-card__header">
         All Events ({{ calendarStore.periodEvents.length }})
@@ -42,7 +53,7 @@ const deleteEv = async (id: string) => {
         >
           <div class="calendar-card__header">
             <div>{{ event.title }}</div>
-            <div>{{ format(parseISO(event.start), 'dd.MM') }} - {{ format(parseISO(event.start), 'HH:mm') }}</div>
+            <div>{{ formatEventDay(event.start) }} - {{ formatEventTime(event.start) }}</div>
           </div>
           <div class="calendar-card__body">
             <div>{{ event.extendedProps.description }}</div>
@@ -64,7 +75,6 @@ const deleteEv = async (id: string) => {
         </div>
       </div>
     </div>
-    <!-- Низ: всегда виден, не сжимается flex’ом -->
     <div class="event-card__bottom">
       <h2 class="event-card__header">
         Work for today
@@ -82,7 +92,7 @@ const deleteEv = async (id: string) => {
             >
               {{ index + 1 }}
             </q-badge>
-            {{ format(parseISO(event.start), 'HH:mm') }}-{{ format(parseISO(event.end), 'HH:mm') }}
+            {{ formatEventTime(event.start) }}-{{ formatEventTime(event.end) }}
           </b>
           <br>
           <div class="q-ml-lg">

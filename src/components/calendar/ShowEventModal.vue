@@ -2,9 +2,11 @@
 import { defineEmits, defineProps, computed } from "vue";
 import { EventData } from "@/types/calendar";
 import { DateTime } from 'luxon';
+import { storeToRefs } from "pinia";
 import {useDictionariesStore} from "@/store/dictionaries";
-import {storeToRefs} from "pinia";
+import { useSettingsStore } from "@/store/settings";
 import {Currency} from "@/types/dictionaries";
+import { toZoneParts } from "@/utils/datetimeZone";
 
 const props = defineProps<{
   modelValue: boolean;
@@ -27,6 +29,8 @@ const dialogModel = computed({
 
 const dictionariesStore = useDictionariesStore()
 const { currencies } = storeToRefs(dictionariesStore)
+const settingsStore = useSettingsStore()
+const { resolvedTimezone: userTimezone } = storeToRefs(settingsStore)
 
 dictionariesStore.fetchCurrencies()
 
@@ -34,30 +38,33 @@ function closeModal() {
   dialogModel.value = false
 }
 
-const formatTime = (date: string) => {
-  return DateTime.fromISO(date).toFormat('dd/MM/yy HH:mm')
+const formatTime = (iso: string) => {
+  return DateTime.fromISO(iso, { zone: 'utc' })
+    .setZone(userTimezone.value)
+    .toFormat('dd/MM/yy HH:mm')
 }
 
 const EditEvent = () => {
-  if(props.event){
+  if (!props.event) return
 
-    let data = {
-      title: props.event.title,
-      description: props.event.extendedProps.description,
-      price: props.event.extendedProps.price,
-      currency_id: props.event.extendedProps.currency_id,
-      student: props.event.extendedProps.student,
-      timezone: props.event.extendedProps.timezone,
-      date_start: DateTime.fromISO(props.event.start).toFormat('yyyy-MM-dd'),
-      date_end: DateTime.fromISO(props.event.end).toFormat('yyyy-MM-dd'),
-      time_start: DateTime.fromISO(props.event.start).toFormat('HH:mm'),
-      time_end: DateTime.fromISO(props.event.end).toFormat('HH:mm'),
-    };
+  const start = toZoneParts(props.event.start, userTimezone.value)
+  const end = toZoneParts(props.event.end, userTimezone.value)
 
-    emit('edit', data, props.event.id)
-  }
+  emit('edit', {
+    title: props.event.title,
+    description: props.event.extendedProps.description,
+    price: props.event.extendedProps.price,
+    currency_id: props.event.extendedProps.currency_id,
+    student: props.event.extendedProps.student,
+    timezone:
+      props.event.extendedProps.student?.timezone
+      ?? props.event.extendedProps.timezone,
+    date_start: start.date,
+    date_end: end.date,
+    time_start: start.time,
+    time_end: end.time,
+  }, props.event.id)
 }
-
 </script>
 
 <template>

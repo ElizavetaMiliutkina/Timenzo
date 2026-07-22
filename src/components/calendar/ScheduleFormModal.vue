@@ -117,7 +117,8 @@ watch(
       // edit + student → список студентов; edit без студента → локация; create → студенты
       selectStudentMode.value = mode === 'edit' ? !!model.student : true
       selectedStudent.value = resolveStudent(model.student)
-      studentTimezone.value = model.timezone || selectedStudent.value?.timezone || null
+      studentTimezone.value =
+        selectedStudent.value?.timezone || model.timezone || null
       form.value = { ...model }
       syncDurationFromForm()
     },
@@ -188,6 +189,7 @@ async function onSubmit() {
 
   emit('submit', {
     ...form.value,
+    title: form.value.title ?? '',
     price: Number(form.value.price),
     time_start: form.value.time_start || '00:00',
     time_end: form.value.time_end || '00:00',
@@ -347,8 +349,10 @@ watch(
           <q-input
             v-model="form.title"
             filled
-            label="Title *"
-            :rules="[val => !!val || 'Enter Title']"
+            :label="selectedStudent ? 'Title' : 'Title *'"
+            :rules="[
+              val => !!selectedStudent || !!val || 'Enter Title',
+            ]"
           />
 
           <div
@@ -461,8 +465,9 @@ watch(
             </div>
           </div>
           <time-zone-slider
-            :key="`${studentTimezone?.id}-${userTimezone}`"
+            :key="`${studentTimezone?.id ?? 'none'}-${userTimezone}`"
             :time="form.time_start || roundedBrowserTime"
+            :date="form.date_start"
             :timezone="studentTimezone?.timezone"
             :local-timezone="userTimezone"
             @selected-time="selectedTime"

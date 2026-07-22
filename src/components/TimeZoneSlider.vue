@@ -74,7 +74,10 @@ const props  = defineProps({
     type: String,
     default: '',
   },
-  /** Базовая «ваша» таймзона (настройки пользователя или браузер). */
+  date: {
+    type: String,
+    default: '',
+  },
   localTimezone: {
     type: String,
     default: '',
@@ -96,15 +99,16 @@ const localTimezoneResolved = computed(() => {
   return DateTime.local().zoneName
 })
 
-const resolvedTimezone = computed(() => {
-  // если пришёл таймзон студента (например America/New_York)
-  if (props.timezone) {
-    return props.timezone
-  }
+const studentTimezoneResolved = computed(() => props.timezone || '')
+const hasStudentTimezone = computed(() => !!studentTimezoneResolved.value)
 
-  // fallback — таймзона пользователя / браузера
-  return localTimezoneResolved.value
-})
+function localDateTimeAtIndex(index: number): DateTime {
+  const minutes = index * props.slot * 60
+  const baseDate = props.date?.trim()
+      ? DateTime.fromISO(props.date, { zone: localTimezoneResolved.value })
+      : DateTime.now().setZone(localTimezoneResolved.value)
+  return baseDate.startOf('day').plus({ minutes })
+}
 
 const getTimeIndex = (time: string): number => {
   const [hours, minutes] = time.split(':').map(Number);
@@ -115,7 +119,7 @@ const getTimeIndex = (time: string): number => {
 
 const timeLabels = computed(() => {
   const slotMinutes = props.slot * 60;
-  const totalSlots = Math.floor(24 * 60 / slotMinutes); // Total slots in a day
+  const totalSlots = Math.floor(24 * 60 / slotMinutes);
   return Array.from({ length: totalSlots }, (_, i) => {
     const minutes = i * slotMinutes;
     return DateTime.fromObject({ hour: 0, minute: 0 }).plus({ minutes }).toFormat('HH:mm');
@@ -123,42 +127,28 @@ const timeLabels = computed(() => {
 });
 
 const gmtLabel = computed(() => {
-  const studentOffset = DateTime.now().setZone(resolvedTimezone.value).offset
+  if (!hasStudentTimezone.value) return 'Student'
+  const studentOffset = DateTime.now().setZone(studentTimezoneResolved.value).offset
   const localOffset = DateTime.now().setZone(localTimezoneResolved.value).offset
-
   const diffMinutes = studentOffset - localOffset
   const sign = diffMinutes >= 0 ? '+' : '-'
   const hours = Math.abs(diffMinutes) / 60
-
   return `Student ${sign}${hours}h`
 })
 
 const timeLabelsGmt = computed(() => {
+  if (!hasStudentTimezone.value) return timeLabels.value
   const slotMinutes = props.slot * 60
   const totalSlots = Math.floor(24 * 60 / slotMinutes)
-
   return Array.from({ length: totalSlots }, (_, i) => {
-    const minutes = i * slotMinutes
-
-    return DateTime
-        .now()
-        .setZone(localTimezoneResolved.value)
-        .startOf('day')
-        .plus({ minutes })
-        .setZone(resolvedTimezone.value)
+    return localDateTimeAtIndex(i)
+        .setZone(studentTimezoneResolved.value)
         .toFormat('HH:mm')
   })
 })
 
 const localTimeDisplay = computed(() => {
-  const minutes = selectedIndex.value * props.slot * 60
-
-  return DateTime
-      .now()
-      .setZone(localTimezoneResolved.value)
-      .startOf('day')
-      .plus({ minutes })
-      .toFormat('HH:mm')
+  return localDateTimeAtIndex(selectedIndex.value).toFormat('HH:mm')
 })
 
 watch(
@@ -171,14 +161,9 @@ watch(
 )
 
 const gmtTimeDisplay = computed(() => {
-  const minutes = selectedIndex.value * props.slot * 60
-
-  return DateTime
-      .now()
-      .setZone(localTimezoneResolved.value)
-      .startOf('day')
-      .plus({ minutes })
-      .setZone(resolvedTimezone.value)
+  if (!hasStudentTimezone.value) return localTimeDisplay.value
+  return localDateTimeAtIndex(selectedIndex.value)
+      .setZone(studentTimezoneResolved.value)
       .toFormat('HH:mm')
 })
 

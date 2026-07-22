@@ -74,7 +74,7 @@ watch(
             Your timezone
           </div>
           <div class="text-body2 text-grey-7 q-mb-md">
-            Calendar times are wall-clock in this zone. If empty, your browser timezone is used.
+            Lessons are stored as absolute UTC moments. This zone is used to enter and display times. If empty, your browser timezone is used.
           </div>
 
           <location-select
