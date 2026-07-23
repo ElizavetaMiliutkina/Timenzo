@@ -38,6 +38,8 @@ const calendarRef = ref<any>(null)
 
 const isFormModalOpen = ref(false)
 const isEventModalOpen = ref(false)
+const formSubmitting = ref(false)
+const eventActionBusy = ref(false)
 
 const mode = ref<'create' | 'edit'>('create')
 const formModel = ref<EventDataCreate | null>(null)
@@ -62,7 +64,8 @@ function openSpreadModal(event: { id: string; title: string }, e: Event) {
 }
 
 async function onSpreadConfirm(payload: { weeks: number; weekdays: number[] }) {
-  if (!spreadSource.value) return
+  if (!spreadSource.value || eventActionBusy.value) return
+  eventActionBusy.value = true
 
   const dismiss = Notify.create({
     type: 'ongoing',
@@ -96,6 +99,7 @@ async function onSpreadConfirm(payload: { weeks: number; weekdays: number[] }) {
   } finally {
     dismiss()
     spreadSource.value = null
+    eventActionBusy.value = false
   }
 }
 function setCopyDragActive(active: boolean) {
@@ -158,10 +162,18 @@ function buildEventPayload(event: EventApi): EventDataCreate {
 }
 
 async function saveEventMove(event: EventApi, revert: () => void) {
-  const result = await calendarStore.patchEvent(buildEventPayload(event), event.id)
-
-  if (!result) {
+  if (eventActionBusy.value) {
     revert()
+    return
+  }
+  eventActionBusy.value = true
+  try {
+    const result = await calendarStore.patchEvent(buildEventPayload(event), event.id)
+    if (!result) {
+      revert()
+    }
+  } finally {
+    eventActionBusy.value = false
   }
 }
 
@@ -315,36 +327,42 @@ watch(userTimezone, (zone, prev) => {
 })
 
 async function deleteEvent(id: number) {
+  if (eventActionBusy.value) return
+  eventActionBusy.value = true
   try {
     await calendarStore.deleteEvent(id)
 
-    // закрываем show modal
     isEventModalOpen.value = false
     selectedEvent.value = null
 
-    // обновляем календарь
     const calendarApi = calendarRef.value?.getApi()
     calendarApi?.refetchEvents()
-
   } catch (error) {
     console.error('Delete failed:', error)
+  } finally {
+    eventActionBusy.value = false
   }
 }
 
 /* ===================== FORM SUBMIT ===================== */
 
 async function onSubmitForm(data: EventDataCreate) {
-  if (mode.value === 'create') {
-    await postEvent(data)
-  } else if (editId.value !== null) {
+  if (formSubmitting.value) return
+  formSubmitting.value = true
+  try {
+    if (mode.value === 'create') {
+      await postEvent(data)
+    } else if (editId.value !== null) {
+      await calendarStore.patchEvent(data, editId.value)
+    }
 
-    await calendarStore.patchEvent(data, editId.value)
+    isFormModalOpen.value = false
+
+    const calendarApi = calendarRef.value?.getApi()
+    calendarApi?.refetchEvents()
+  } finally {
+    formSubmitting.value = false
   }
-
-  isFormModalOpen.value = false
-
-  const calendarApi = calendarRef.value?.getApi()
-  calendarApi?.refetchEvents()
 }
 
 /* ===================== CALENDAR OPTIONS ===================== */
@@ -440,12 +458,14 @@ watch(
     v-model="isFormModalOpen"
     :model="formModel"
     :mode="mode"
+    :submitting="formSubmitting"
     @submit="onSubmitForm"
   />
 
   <ShowEventModal
     v-model="isEventModalOpen"
     :event="selectedEvent"
+    :busy="eventActionBusy"
     @unselect="selectedEvent = null"
     @edit="editEventForm"
     @delete="deleteEvent"
@@ -454,6 +474,7 @@ watch(
   <SpreadModal
     v-model="isSpreadModalOpen"
     :event-title="spreadSource?.title"
+    :busy="eventActionBusy"
     @confirm="onSpreadConfirm"
   />
 </template>

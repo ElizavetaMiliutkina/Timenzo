@@ -29,6 +29,7 @@ async function loadSettings() {
 }
 
 async function onLocationChange(location: LocationOption | null) {
+  if (saving.value) return
   selectedLocation.value = location
   saving.value = true
 
@@ -80,6 +81,7 @@ watch(
           <location-select
             :model-value="selectedLocation"
             :required="false"
+            :disable="saving"
             @update:model-value="onLocationChange"
           />
 

@@ -1,11 +1,18 @@
 import axios from '@/plugins/axios'
 import {EventData, EventDataCreate} from "@/types/calendar";
 
+const postInflight = new Set<string>()
+
 export const postEvent = async (payload: EventDataCreate) => {
+    const key = `${payload.date_start}|${payload.time_start}|${payload.student_id}|${payload.title}`
+    if (postInflight.has(key)) return null
+    postInflight.add(key)
     try {
         return await axios.post('/event', payload)
     } catch (error) {
-        return  error;
+        return error
+    } finally {
+        postInflight.delete(key)
     }
 }
 

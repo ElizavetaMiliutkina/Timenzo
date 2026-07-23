@@ -4,6 +4,7 @@ import Table from "@/components/table/Table.vue";
 import AddStudentModal from "@/components/modals/AddStudentModal.vue";
 import AdditionalColumnsModal from "@/components/modals/AdditionalColumnsModal.vue";
 import {useStudentStore} from "@/store/students";
+import { useBusyIds } from '@/composables/useBusyAction'
 
 import { useQuasar, QTableColumn } from 'quasar'
 import {useDictionariesStore} from "@/store/dictionaries";
@@ -16,6 +17,7 @@ import {formatExtraValue} from "@/utils/extraValue";
 const $q = useQuasar()
 
 const studentStore = useStudentStore()
+const { isBusy: isDeletingStudent, runFor: runDeleteStudent } = useBusyIds()
 const student = ref<StudentFormData | null>(null)
 const openStudentModal = ref<boolean>(false)
 const openAdditionalColumnsModal = ref<boolean>(false)
@@ -118,13 +120,14 @@ const editStudent = (row: Student) => {
 }
 
 const deleteStudent = (row: Student) => {
+  if (isDeletingStudent(row.id)) return
   $q.dialog({
     title: 'Confirm',
     message: `Are you sure you want to delete ${row.name} student?`,
     cancel: true,
     persistent: true,
-  }).onOk(async () => {
-    await studentStore.deleteStudent(row.id)
+  }).onOk(() => {
+    void runDeleteStudent(row.id, () => studentStore.deleteStudent(row.id))
   })
 }
 
@@ -181,6 +184,8 @@ watch(openStudentModal, (val) => {
             flat
             round
             size="sm"
+            :loading="isDeletingStudent(row.id)"
+            :disable="isDeletingStudent(row.id)"
             @click="deleteStudent(row)"
           />
         </q-td>

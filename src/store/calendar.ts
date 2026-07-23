@@ -7,6 +7,20 @@ import {format, subYears} from "date-fns";
 
 /** In-flight dedupe для одинаковых GET /events (FullCalendar иногда дёргает events дважды). */
 const eventsInflight = new Map<string, Promise<EventData[]>>()
+const mutationInflight = new Set<string>()
+
+async function withMutationLock<T>(
+    key: string,
+    fn: () => Promise<T>
+): Promise<T | null> {
+    if (mutationInflight.has(key)) return null
+    mutationInflight.add(key)
+    try {
+        return await fn()
+    } finally {
+        mutationInflight.delete(key)
+    }
+}
 
 export const useCalendarStore = defineStore('calendar', {
     state: (): {
@@ -71,33 +85,37 @@ export const useCalendarStore = defineStore('calendar', {
             return request
         },
         async patchEvent(payload: EventDataCreate, id: number | string): Promise<EventData | null> {
-            try {
-                const response = await axios.patch<EventData>(`/events/${id}`, payload)
-                const index = this.events.findIndex((event) => event.id === response.data.id)
-                if (index !== -1) {
-                    this.events[index] = response.data
+            return withMutationLock(`patch-event:${id}`, async () => {
+                try {
+                    const response = await axios.patch<EventData>(`/events/${id}`, payload)
+                    const index = this.events.findIndex((event) => event.id === response.data.id)
+                    if (index !== -1) {
+                        this.events[index] = response.data
+                    }
+                    void this.refreshPeriodEvents()
+                    return response.data
+                } catch (error) {
+                    console.error('Error fetching events:', error)
+                    return null
                 }
-                // сайдбар обновляем без блокировки PATCH
-                void this.refreshPeriodEvents()
-                return response.data
-            } catch (error) {
-                console.error('Error fetching events:', error)
-                return null
-            }
+            })
         },
         async completeEvent(id: string): Promise<EventData[]> {
-            try {
-                const response = await axios.patch<EventData[]>(`/events/${id}/complete`)
-                this.events = response.data
-                await Promise.all([
-                    this.refreshPeriodEvents(),
-                    this.incomeGraph(this.graphPeriod),
-                ])
-                return response.data
-            } catch (error) {
-                console.error('Error fetching events:', error)
-                return []
-            }
+            const result = await withMutationLock(`complete-event:${id}`, async () => {
+                try {
+                    const response = await axios.patch<EventData[]>(`/events/${id}/complete`)
+                    this.events = response.data
+                    await Promise.all([
+                        this.refreshPeriodEvents(),
+                        this.incomeGraph(this.graphPeriod),
+                    ])
+                    return response.data
+                } catch (error) {
+                    console.error('Error fetching events:', error)
+                    return []
+                }
+            })
+            return result ?? []
         },
         async reloadEvents(): Promise<EventData[]> {
             try {
@@ -108,17 +126,19 @@ export const useCalendarStore = defineStore('calendar', {
             }
         },
         async deleteEvent(id: string | number) {
-            try {
-                const response = await axios.delete(`/events/${id}`)
-                await Promise.all([
-                    this.reloadEvents(),
-                    this.refreshPeriodEvents(),
-                ])
-                return response
-            } catch (error) {
-                console.error('Error fetching events:', error)
-                return []
-            }
+            return withMutationLock(`delete-event:${id}`, async () => {
+                try {
+                    const response = await axios.delete(`/events/${id}`)
+                    await Promise.all([
+                        this.reloadEvents(),
+                        this.refreshPeriodEvents(),
+                    ])
+                    return response
+                } catch (error) {
+                    console.error('Error fetching events:', error)
+                    return []
+                }
+            })
         },
         async incomeGraph(period: number): Promise<GraphData> {
             try {

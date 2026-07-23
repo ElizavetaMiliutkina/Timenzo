@@ -7,6 +7,7 @@ import type {LocationOption} from "@/types/location"
 const props = defineProps<{
   modelValue: LocationOption | null
   required?: boolean
+  disable?: boolean
 }>()
 
 const emit = defineEmits(['update:modelValue'])
@@ -63,6 +64,7 @@ const locationRules = computed(() => {
       input-debounce="0"
       :options="locationSuggestions"
       :rules="locationRules"
+      :disable="disable"
       option-label="label"
       option-value="value"
       :label="!props.required ? 'Enter your city...' : 'Enter your city... *'"

@@ -11,6 +11,7 @@ import { toZoneParts } from "@/utils/datetimeZone";
 const props = defineProps<{
   modelValue: boolean;
   event: EventData | null;
+  busy?: boolean;
 }>()
 
 const emit = defineEmits(['update:modelValue', 'edit', 'unselect', 'delete'])
@@ -86,18 +87,23 @@ const EditEvent = () => {
         <q-btn
           label="Cancel"
           color="grey"
+          :disable="busy"
           @click="closeModal"
         />
         <q-btn
           label="Delete"
           color="red"
+          :loading="busy"
+          :disable="busy"
           @click="() => {
-            emit('delete', event?.id)
+            if (busy || !event?.id) return
+            emit('delete', event.id)
           }"
         />
         <q-btn
           label="Edit"
           color="primary"
+          :disable="busy"
           @click="EditEvent"
         />
       </q-card-actions>

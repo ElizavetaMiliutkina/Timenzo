@@ -4,10 +4,12 @@ import { useCalendarStore } from '@/store/calendar'
 import { useSettingsStore } from '@/store/settings'
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useBusyIds } from '@/composables/useBusyAction'
 
 const calendarStore = useCalendarStore()
 const settingsStore = useSettingsStore()
 const { resolvedTimezone: userTimezone } = storeToRefs(settingsStore)
+const { isBusy, runFor } = useBusyIds()
 
 function eventInZone(iso: string) {
   return DateTime.fromISO(iso, { zone: 'utc' }).setZone(userTimezone.value)
@@ -29,13 +31,17 @@ function formatEventTime(iso: string) {
 }
 
 const completeEv = async (id: string) => {
-  const response = await calendarStore.completeEvent(id)
-  if (response) {
-    await calendarStore.reloadEvents()
-  }
+  await runFor(`complete:${id}`, async () => {
+    const response = await calendarStore.completeEvent(id)
+    if (response) {
+      await calendarStore.reloadEvents()
+    }
+  })
 }
 const deleteEv = async (id: string) => {
-  await calendarStore.deleteEvent(id)
+  await runFor(`delete:${id}`, async () => {
+    await calendarStore.deleteEvent(id)
+  })
 }
 </script>
 
@@ -61,12 +67,16 @@ const deleteEv = async (id: string) => {
           <div class="calendar-card__footer">
             <q-btn
               color="primary"
+              :loading="isBusy(`complete:${event.id}`)"
+              :disable="isBusy(`complete:${event.id}`) || isBusy(`delete:${event.id}`)"
               @click="completeEv(event.id)"
             >
               Complete
             </q-btn>
             <q-btn
               color="red"
+              :loading="isBusy(`delete:${event.id}`)"
+              :disable="isBusy(`complete:${event.id}`) || isBusy(`delete:${event.id}`)"
               @click="deleteEv(event.id)"
             >
               Delete

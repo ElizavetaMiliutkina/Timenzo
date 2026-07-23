@@ -4,6 +4,7 @@ import { ref, watch, computed } from 'vue'
 const props = defineProps<{
   modelValue: boolean
   eventTitle?: string
+  busy?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -53,7 +54,7 @@ function close() {
 }
 
 function onSave() {
-  if (!canSave.value) return
+  if (!canSave.value || props.busy) return
   emit('confirm', {
     weeks: weeks.value,
     weekdays: [...selectedWeekdays.value],
@@ -125,7 +126,8 @@ function onSave() {
         <q-btn
           label="Save"
           color="primary"
-          :disable="!canSave"
+          :disable="!canSave || busy"
+          :loading="busy"
           @click="onSave"
         />
       </q-card-actions>

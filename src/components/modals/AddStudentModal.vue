@@ -10,11 +10,13 @@ import type { QForm } from 'quasar'
 import ColorPicker from "@/components/shared/ColorPicker.vue";
 import DynamicField from "@/components/shared/DynamicField.vue";
 import { useUnsavedClose } from '@/composables/useUnsavedClose'
+import { useBusyAction } from '@/composables/useBusyAction'
 import { getColumnKey } from '@/types/additionalColumns'
 import { defaultValueForType } from '@/utils/extraValue'
 
 const studentStore = useStudentStore()
 const { confirmCloseIfDirty } = useUnsavedClose()
+const { busy: submitting, run: runSubmit } = useBusyAction()
 
 const additionalColumnsStore = useAdditionalColumnsStore()
 const { columns: additionalColumns } = storeToRefs(additionalColumnsStore)
@@ -98,7 +100,8 @@ dictionariesStore.fetchCurrencies()
 const isEdit = computed(() => !!props.form?.id)
 
 const onSubmit = async () => {
-  if (formRef.value?.validate() && form.value.timezone) {
+  await runSubmit(async () => {
+    if (!(formRef.value?.validate() && form.value.timezone)) return
 
     let response
 
@@ -109,7 +112,7 @@ const onSubmit = async () => {
     }
 
     if (response) finalizeClose()
-  }
+  })
 }
 
 const closeModal = () => finalizeClose()
@@ -269,11 +272,14 @@ watch(
           flat
           label="Cancel"
           color="primary"
+          :disable="submitting"
           @click="closeModal"
         />
         <q-btn
           label="Submit"
           color="primary"
+          :loading="submitting"
+          :disable="submitting"
           @click="onSubmit"
         />
       </q-card-actions>

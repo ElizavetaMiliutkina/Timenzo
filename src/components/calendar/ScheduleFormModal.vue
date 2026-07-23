@@ -15,9 +15,11 @@ import { useSettingsStore } from '@/store/settings'
 import {Student, Timezone} from "@/types/students";
 import LocationSelect from "@/components/LocationSelect.vue";
 import { useUnsavedClose } from '@/composables/useUnsavedClose'
+import { useBusyAction } from '@/composables/useBusyAction'
 
 const studentStore = useStudentStore()
 const { confirmCloseIfDirty } = useUnsavedClose()
+const { busy, run: runSubmit } = useBusyAction()
 const { students } = storeToRefs(studentStore)
 const selectedStudent = ref<Student | null>(null)
 const studentTimezone = ref<Timezone|null>(null)
@@ -30,6 +32,8 @@ const props = defineProps<{
   modelValue: boolean
   model: EventDataCreate | null
   mode: 'create' | 'edit'
+  /** Родитель ждёт API — кнопка Submit disabled/loading */
+  submitting?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -182,22 +186,23 @@ function selectedTime(time: string) {
 /* ===================== SUBMIT ===================== */
 
 async function onSubmit() {
-  if (!formRef.value) return
+  await runSubmit(async () => {
+    if (!formRef.value || props.submitting) return
 
-  const isValid = await formRef.value.validate()
-  if (!isValid || !isTimePeriodValid.value) return
+    const isValid = await formRef.value.validate()
+    if (!isValid || !isTimePeriodValid.value) return
 
-  emit('submit', {
-    ...form.value,
-    title: form.value.title ?? '',
-    price: Number(form.value.price),
-    time_start: form.value.time_start || '00:00',
-    time_end: form.value.time_end || '00:00',
-    timezone_id: studentTimezone.value?.id || null,
-    student_id: selectedStudent.value?.id || null,
+    emit('submit', {
+      ...form.value,
+      title: form.value.title ?? '',
+      price: Number(form.value.price),
+      time_start: form.value.time_start || '00:00',
+      time_end: form.value.time_end || '00:00',
+      timezone_id: studentTimezone.value?.id || null,
+      student_id: selectedStudent.value?.id || null,
+    })
+    // закрытие после успешного API — в родителе
   })
-
-  finalizeClose()
 }
 
 function closeModal() {
@@ -502,11 +507,14 @@ watch(
           flat
           label="Cancel"
           color="primary"
+          :disable="busy || submitting"
           @click="closeModal"
         />
         <q-btn
           label="Submit"
           color="primary"
+          :loading="busy || submitting"
+          :disable="busy || submitting"
           @click="onSubmit"
         />
       </q-card-actions>

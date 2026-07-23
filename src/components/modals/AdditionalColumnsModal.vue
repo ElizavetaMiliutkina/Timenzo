@@ -24,7 +24,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
-  (e: 'saved', value: AdditionalColumnFull[]): void
+  (e: 'saved', value: AdditionalColumn[]): void
 }>()
 
 const additionalColumnsStore = useAdditionalColumnsStore()
@@ -224,6 +224,7 @@ const typeRules = [
           label="Save"
           color="primary"
           :loading="submitting"
+          :disable="submitting"
           @click="onSubmit"
         />
       </q-card-actions>
