@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { AdditionalColumnType } from '@/types/additionalColumns'
 import type { ExtraValue } from '@/types/students'
 
@@ -7,6 +7,7 @@ const props = defineProps<{
   modelValue: ExtraValue | undefined
   label: string
   type: AdditionalColumnType
+  minimal?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -17,37 +18,54 @@ const value = computed<ExtraValue>({
   get: () => (props.modelValue ?? (props.type === 'boolean' ? false : '')) as ExtraValue,
   set: (v) => emit('update:modelValue', v),
 })
+
+const fieldRef = ref<{ focus: () => void } | null>(null)
+
+defineExpose({
+  focus: () => fieldRef.value?.focus(),
+})
 </script>
 
 <template>
   <q-toggle
     v-if="type === 'boolean'"
+    ref="fieldRef"
     v-model="value as boolean"
-    :label="label"
+    :label="minimal ? undefined : label"
+    :dense="minimal"
   />
 
   <q-input
     v-else-if="type === 'textarea'"
+    ref="fieldRef"
     v-model="value as string"
-    filled
+    :filled="!minimal"
+    :borderless="minimal"
+    :dense="minimal"
     type="textarea"
     autogrow
-    :label="label"
+    :label="minimal ? undefined : label"
   />
 
   <q-input
     v-else-if="type === 'number'"
+    ref="fieldRef"
     v-model.number="value as number"
-    filled
+    :filled="!minimal"
+    :borderless="minimal"
+    :dense="minimal"
     type="number"
-    :label="label"
+    :label="minimal ? undefined : label"
   />
 
   <q-input
     v-else-if="type === 'date'"
+    ref="fieldRef"
     v-model="value as string"
-    filled
-    :label="label"
+    :filled="!minimal"
+    :borderless="minimal"
+    :dense="minimal"
+    :label="minimal ? undefined : label"
     placeholder="YYYY-MM-DD"
     mask="####-##-##"
   >
@@ -72,9 +90,12 @@ const value = computed<ExtraValue>({
 
   <q-input
     v-else-if="type === 'datetime'"
+    ref="fieldRef"
     v-model="value as string"
-    filled
-    :label="label"
+    :filled="!minimal"
+    :borderless="minimal"
+    :dense="minimal"
+    :label="minimal ? undefined : label"
     placeholder="YYYY-MM-DD HH:mm"
     mask="####-##-## ##:##"
   >
@@ -107,32 +128,44 @@ const value = computed<ExtraValue>({
 
   <q-input
     v-else-if="type === 'email'"
+    ref="fieldRef"
     v-model="value as string"
-    filled
+    :filled="!minimal"
+    :borderless="minimal"
+    :dense="minimal"
     type="email"
-    :label="label"
+    :label="minimal ? undefined : label"
   />
 
   <q-input
     v-else-if="type === 'link'"
+    ref="fieldRef"
     v-model="value as string"
-    filled
+    :filled="!minimal"
+    :borderless="minimal"
+    :dense="minimal"
     type="url"
-    :label="label"
+    :label="minimal ? undefined : label"
   />
 
   <q-input
     v-else-if="type === 'phone'"
+    ref="fieldRef"
     v-model="value as string"
-    filled
+    :filled="!minimal"
+    :borderless="minimal"
+    :dense="minimal"
     type="tel"
-    :label="label"
+    :label="minimal ? undefined : label"
   />
 
   <q-input
     v-else
+    ref="fieldRef"
     v-model="value as string"
-    filled
-    :label="label"
+    :filled="!minimal"
+    :borderless="minimal"
+    :dense="minimal"
+    :label="minimal ? undefined : label"
   />
 </template>

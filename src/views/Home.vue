@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import Table from "@/components/table/Table.vue";
 import AddStudentModal from "@/components/modals/AddStudentModal.vue";
 import AdditionalColumnsModal from "@/components/modals/AdditionalColumnsModal.vue";
+import LocationSelect from "@/components/LocationSelect.vue";
+import DynamicField from "@/components/shared/DynamicField.vue";
 import {useStudentStore} from "@/store/students";
-import { useBusyIds } from '@/composables/useBusyAction'
+import { useBusyIds, useBusyAction } from '@/composables/useBusyAction'
 
 import { useQuasar, QTableColumn } from 'quasar'
 import {useDictionariesStore} from "@/store/dictionaries";
 import {useAdditionalColumnsStore} from "@/store/additionalColumns";
 import {storeToRefs} from "pinia";
-import {Student, type StudentFormData, Timezone} from "@/types/students";
+import {Student, type StudentFormData, Timezone, type ExtraData} from "@/types/students";
 import {getColumnKey} from "@/types/additionalColumns";
 import {formatExtraValue} from "@/utils/extraValue";
 
@@ -103,7 +105,85 @@ const columns = computed<QTableColumn[]>(() => {
   return [...staticColumns, ...dynamic, actionsColumn]
 })
 
+/**
+ * Инлайн-редактирование строки прямо в таблице (без модалки).
+ * Клик по любому полю строки переводит эту строку в режим редактирования,
+ * кнопки в Actions меняются на "Отмена"/"Сохранить".
+ */
+const editingRowId = ref<number | null>(null)
+const editDraft = ref<StudentFormData | null>(null)
+const editingField = ref<string | null>(null)
+const { busy: isSavingInline, run: runSaveInline } = useBusyAction()
+
+const nameInputRef = ref<{ focus: () => void } | null>(null)
+const priceInputRef = ref<{ focus: () => void } | null>(null)
+const commentInputRef = ref<{ focus: () => void } | null>(null)
+const timezoneSelectRef = ref<{ focus: () => void } | null>(null)
+const extraFieldRefs = ref<Record<string, { focus: () => void } | null>>({})
+
+function focusEditingField(field: string) {
+  if (field === 'name') nameInputRef.value?.focus()
+  else if (field === 'price') priceInputRef.value?.focus()
+  else if (field === 'comment') commentInputRef.value?.focus()
+  else if (field === 'timezone') timezoneSelectRef.value?.focus()
+  else if (field.startsWith('extra:')) {
+    const key = field.slice('extra:'.length)
+    extraFieldRefs.value[key]?.focus()
+  }
+}
+
+const isEditDraftValid = computed(() => {
+  const d = editDraft.value
+  if (!d) return false
+  return !!d.name
+      && d.price !== null && d.price !== undefined && Number(d.price) >= 0
+      && !!d.currency_id
+      && !!d.timezone
+})
+
+const startInlineEdit = async (row: Student, field: string) => {
+  if (editingRowId.value !== null) return
+  if (isDeletingStudent(row.id)) return
+  editingRowId.value = row.id
+  editingField.value = field
+  editDraft.value = {
+    id: row.id,
+    name: row.name,
+    price: row.price,
+    comment: row.comment,
+    timezone: row.timezone,
+    currency_id: row.currency_id,
+    paid: row.paid ?? 0,
+    color: row.color ?? '#000000',
+    extra: { ...(row.extra ?? {}) },
+  }
+  await nextTick()
+  focusEditingField(field)
+}
+
+const cancelInlineEdit = () => {
+  editingRowId.value = null
+  editDraft.value = null
+  editingField.value = null
+}
+
+const saveInlineEdit = async () => {
+  if (!editDraft.value || editingRowId.value === null || !isEditDraftValid.value) return
+  const id = editingRowId.value
+  const payload = editDraft.value
+  await runSaveInline(async () => {
+    const response = await studentStore.updateStudent(id, payload)
+    if (response) {
+      editingRowId.value = null
+      editDraft.value = null
+      editingField.value = null
+    }
+  })
+}
+
 const editStudent = (row: Student) => {
+  cancelInlineEdit()
+
   student.value = {
     id: row.id,
     name: row.name,
@@ -168,30 +248,196 @@ watch(openStudentModal, (val) => {
       :columns="columns"
       :rows="students"
     >
+      <template #body-cell-name="{ row }">
+        <q-td>
+          <q-input
+            v-if="editingRowId === row.id"
+            ref="nameInputRef"
+            v-model="editDraft!.name"
+            dense
+            borderless
+            @keyup.enter="saveInlineEdit"
+            @keyup.esc="cancelInlineEdit"
+          />
+          <div
+            v-else
+            class="table-cell-ellipsis editable-cell"
+            @click="startInlineEdit(row, 'name')"
+          >
+            {{ row.name }}
+          </div>
+        </q-td>
+      </template>
+
+      <template #body-cell-price="{ row }">
+        <q-td>
+          <div
+            v-if="editingRowId === row.id"
+            class="row items-center no-wrap"
+            style="gap: 8px"
+          >
+            <q-input
+              ref="priceInputRef"
+              v-model.number="editDraft!.price"
+              type="number"
+              dense
+              borderless
+              style="width: 90px"
+              @keyup.enter="saveInlineEdit"
+              @keyup.esc="cancelInlineEdit"
+            />
+            <q-select
+              v-model="editDraft!.currency_id"
+              :options="currencies"
+              emit-value
+              map-options
+              option-label="label"
+              option-value="id"
+              dense
+              borderless
+              style="min-width: 90px"
+            />
+          </div>
+          <div
+            v-else
+            class="table-cell-ellipsis editable-cell"
+            @click="startInlineEdit(row, 'price')"
+          >
+            {{ row.price }} {{ currencies.find((c) => c.id === row.currency_id)?.symbol ?? '' }}
+          </div>
+        </q-td>
+      </template>
+
+      <template #body-cell-timezone="{ row }">
+        <q-td>
+          <location-select
+            v-if="editingRowId === row.id"
+            ref="timezoneSelectRef"
+            v-model="editDraft!.timezone"
+            minimal
+          />
+          <div
+            v-else
+            class="table-cell-ellipsis editable-cell"
+            @click="startInlineEdit(row, 'timezone')"
+          >
+            {{ row.timezone?.label }}
+          </div>
+        </q-td>
+      </template>
+
+      <template #body-cell-comment="{ row }">
+        <q-td>
+          <q-input
+            v-if="editingRowId === row.id"
+            ref="commentInputRef"
+            v-model="editDraft!.comment"
+            type="textarea"
+            autogrow
+            dense
+            borderless
+            @keyup.esc="cancelInlineEdit"
+          />
+          <div
+            v-else
+            class="table-cell-ellipsis editable-cell"
+            @click="startInlineEdit(row, 'comment')"
+          >
+            {{ row.comment }}
+          </div>
+        </q-td>
+      </template>
+
+      <template
+        v-for="(col, idx) in additionalColumns"
+        :key="col.id ?? col.key ?? idx"
+        #[`body-cell-extra:${getColumnKey(col,idx)}`]="{ row }"
+      >
+        <q-td>
+          <DynamicField
+            v-if="editingRowId === row.id"
+            :ref="(el) => { extraFieldRefs[getColumnKey(col,idx)] = el as { focus: () => void } | null }"
+            v-model="(editDraft!.extra as ExtraData)[getColumnKey(col, idx)]"
+            :label="col.label"
+            :type="col.type"
+            minimal
+          />
+          <div
+            v-else
+            class="table-cell-ellipsis editable-cell"
+            @click="startInlineEdit(row, `extra:${getColumnKey(col,idx)}`)"
+          >
+            {{ formatExtraValue(row.extra?.[getColumnKey(col, idx)]) }}
+          </div>
+        </q-td>
+      </template>
+
       <template #body-cell-actions="{ row }">
         <q-td style="text-align: center">
-          <q-btn
-            icon="edit"
-            color="primary"
-            flat
-            round
-            size="sm"
-            @click="editStudent(row)"
-          />
-          <q-btn
-            icon="delete"
-            color="negative"
-            flat
-            round
-            size="sm"
-            :loading="isDeletingStudent(row.id)"
-            :disable="isDeletingStudent(row.id)"
-            @click="deleteStudent(row)"
-          />
+          <template v-if="editingRowId === row.id">
+            <q-btn
+              icon="close"
+              color="grey-7"
+              flat
+              round
+              size="sm"
+              :disable="isSavingInline"
+              @click="cancelInlineEdit"
+            />
+            <q-btn
+              icon="check"
+              color="positive"
+              flat
+              round
+              size="sm"
+              :loading="isSavingInline"
+              :disable="isSavingInline || !isEditDraftValid"
+              @click="saveInlineEdit"
+            />
+          </template>
+          <template v-else>
+            <q-btn
+              icon="edit"
+              color="primary"
+              flat
+              round
+              size="sm"
+              :disable="editingRowId !== null"
+              @click="editStudent(row)"
+            />
+            <q-btn
+              icon="delete"
+              color="negative"
+              flat
+              round
+              size="sm"
+              :loading="isDeletingStudent(row.id)"
+              :disable="isDeletingStudent(row.id) || editingRowId !== null"
+              @click="deleteStudent(row)"
+            />
+          </template>
         </q-td>
       </template>
     </Table>
   </div>
 </template>
 
-<style lang='css'></style>
+<style lang='css'>
+.table-cell-ellipsis {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editable-cell {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 2px 4px;
+  margin: -2px -4px;
+}
+
+.editable-cell:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+</style>

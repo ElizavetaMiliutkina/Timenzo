@@ -8,6 +8,7 @@ const props = defineProps<{
   modelValue: LocationOption | null
   required?: boolean
   disable?: boolean
+  minimal?: boolean
 }>()
 
 const emit = defineEmits(['update:modelValue'])
@@ -53,11 +54,18 @@ const locationRules = computed(() => {
   if (!props.required) return []
   return [(val: LocationOption | null) => !!val || 'Enter your city']
 })
+
+const selectRef = ref<{ focus: () => void } | null>(null)
+
+defineExpose({
+  focus: () => selectRef.value?.focus(),
+})
 </script>
 
 <template>
   <div>
     <q-select
+      ref="selectRef"
       v-model="selectedLocation"
       use-input
       clearable
@@ -67,9 +75,11 @@ const locationRules = computed(() => {
       :disable="disable"
       option-label="label"
       option-value="value"
-      :label="!props.required ? 'Enter your city...' : 'Enter your city... *'"
-      square
-      filled
+      :label="minimal ? undefined : (!props.required ? 'Enter your city...' : 'Enter your city... *')"
+      :square="!minimal"
+      :filled="!minimal"
+      :borderless="minimal"
+      :dense="minimal"
       @filter="onFilter"
       @update:model-value="onSelect"
     />
