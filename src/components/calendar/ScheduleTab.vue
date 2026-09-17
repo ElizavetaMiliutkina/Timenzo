@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Notify } from 'quasar'
 import FullCalendar from '@fullcalendar/vue3'
@@ -14,6 +14,7 @@ import {
   EventDropArg,
   EventApi,
   CalendarOptions,
+  DayCellMountArg,
 } from '@fullcalendar/core'
 import type { EventDragStartArg, EventResizeDoneArg } from '@fullcalendar/interaction'
 import { DateTime } from 'luxon'
@@ -22,7 +23,7 @@ import ScheduleFormModal from '@/components/calendar/ScheduleFormModal.vue'
 import ShowEventModal from '@/components/calendar/ShowEventModal.vue'
 import SpreadModal from '@/components/calendar/SpreadModal.vue'
 
-import { postEvent, spreadEvent } from '@/services/calendar'
+import { postEvent, spreadEvent, spreadWeekEvent } from '@/services/calendar'
 import { useCalendarStore } from '@/store/calendar'
 import { useSettingsStore } from '@/store/settings'
 import type { EventData, EventDataCreate } from '@/types/calendar'
@@ -51,11 +52,17 @@ const copyDropHandled = ref(false)
 let copyPlaceholderEl: HTMLElement | null = null
 
 const isSpreadModalOpen = ref(false)
+const spreadMode = ref<'lesson' | 'week'>('lesson')
 const spreadSource = ref<{ id: number; title: string } | null>(null)
+const spreadWeekStart = ref<string | null>(null)
+const spreadWeekLabel = ref('')
 
 function openSpreadModal(event: { id: string; title: string }, e: Event) {
   e.preventDefault()
   e.stopPropagation()
+  spreadMode.value = 'lesson'
+  spreadWeekStart.value = null
+  spreadWeekLabel.value = ''
   spreadSource.value = {
     id: Number(event.id),
     title: event.title,
@@ -63,8 +70,68 @@ function openSpreadModal(event: { id: string; title: string }, e: Event) {
   isSpreadModalOpen.value = true
 }
 
+function openSpreadWeekModal(weekStartIso: string, weekLabel: string, e: Event) {
+  e.preventDefault()
+  e.stopPropagation()
+  spreadMode.value = 'week'
+  spreadSource.value = null
+  spreadWeekStart.value = weekStartIso
+  spreadWeekLabel.value = weekLabel
+  isSpreadModalOpen.value = true
+}
+
+const spreadModalTitle = computed(() => {
+  if (spreadMode.value === 'week') return spreadWeekLabel.value
+  return spreadSource.value?.title ?? ''
+})
+
 async function onSpreadConfirm(payload: { weeks: number; weekdays: number[] }) {
-  if (!spreadSource.value || eventActionBusy.value) return
+  if (eventActionBusy.value) return
+
+  if (spreadMode.value === 'week') {
+    if (!spreadWeekStart.value) return
+    eventActionBusy.value = true
+    const dismiss = Notify.create({
+      type: 'ongoing',
+      message: 'Spreading week lessons…',
+      spinner: true,
+      timeout: 0,
+    })
+    try {
+      const result = await spreadWeekEvent({
+        week_start: spreadWeekStart.value,
+        weeks: payload.weeks,
+        weekdays: payload.weekdays,
+      })
+      if (!result) {
+        Notify.create({ type: 'negative', message: 'Failed to spread week lessons' })
+        return
+      }
+      if (result.created_count === 0) {
+        Notify.create({
+          type: 'warning',
+          message: 'No lessons in this week to spread',
+          timeout: 2500,
+        })
+      } else {
+        Notify.create({
+          type: 'positive',
+          message: `Created ${result.created_count} lesson${result.created_count === 1 ? '' : 's'}`,
+          timeout: 2500,
+        })
+      }
+      refetchCalendarEvents()
+      await calendarStore.refreshPeriodEvents()
+    } finally {
+      dismiss()
+      spreadWeekStart.value = null
+      spreadWeekLabel.value = ''
+      eventActionBusy.value = false
+    }
+    return
+  }
+
+  if (!spreadSource.value) return
   eventActionBusy.value = true
 
   const dismiss = Notify.create({
@@ -101,6 +168,40 @@ async function onSpreadConfirm(payload: { weeks: number; weekdays: number[] }) {
     spreadSource.value = null
     eventActionBusy.value = false
   }
+}
+
+function mountWeekSpreadButton(arg: DayCellMountArg) {
+  if (arg.view.type !== 'dayGridMonth') return
+
+  const zone = userTimezone.value
+  const y = arg.date.getUTCFullYear()
+  const m = arg.date.getUTCMonth() + 1
+  const d = arg.date.getUTCDate()
+  const day = DateTime.fromObject({ year: y, month: m, day: d }, { zone })
+  if (!day.isValid || day.weekday !== 7) return
+
+  const weekStart = day.minus({ days: 6 })
+  const weekStartIso = weekStart.toFormat('yyyy-MM-dd')
+  const weekLabel = `${weekStart.toFormat('MMM d')} – ${day.toFormat('MMM d')}`
+
+  arg.el.classList.add('fc-day-sunday-with-spread')
+
+  const btn = document.createElement('button')
+  btn.type = 'button'
+  btn.className = 'fc-week-spread-btn'
+  btn.title = 'Spread all week lessons'
+  btn.setAttribute('aria-label', 'Spread all week lessons')
+  btn.innerHTML = '<span class="material-icons">content_copy</span>'
+  btn.addEventListener('mousedown', (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+  })
+  btn.addEventListener('click', (e) => {
+    openSpreadWeekModal(weekStartIso, weekLabel, e)
+  })
+
+  const frame = arg.el.querySelector('.fc-daygrid-day-frame') || arg.el
+  frame.appendChild(btn)
 }
 function setCopyDragActive(active: boolean) {
   const calendarEl = calendarRef.value?.$el as HTMLElement | undefined
@@ -396,6 +497,7 @@ const calendarOptions = ref<CalendarOptions>({
     info.el.style.background = color
     info.el.style.color = 'white'
   },
+  dayCellDidMount: mountWeekSpreadButton,
   events: async (info, successCallback, failureCallback) => {
     try {
       const zone = userTimezone.value
@@ -473,7 +575,8 @@ watch(
 
   <SpreadModal
     v-model="isSpreadModalOpen"
-    :event-title="spreadSource?.title"
+    :mode="spreadMode"
+    :event-title="spreadModalTitle"
     :busy="eventActionBusy"
     @confirm="onSpreadConfirm"
   />
@@ -504,6 +607,53 @@ b {
   flex-shrink: 0;
   color: inherit;
   opacity: 0.85;
+}
+
+.demo-app-calendar :deep(.fc-scroller-harness) {
+  overflow: visible;
+}
+
+.demo-app-calendar :deep(.fc-scroller.fc-scroller-liquid-absolute) {
+  overflow: visible !important;
+}
+
+.demo-app-calendar :deep(.fc-day-sunday-with-spread),
+.demo-app-calendar :deep(.fc-day-sunday-with-spread .fc-daygrid-day-frame) {
+  position: relative;
+}
+
+.demo-app-calendar :deep(.fc-day-sunday-with-spread .fc-daygrid-day-top) {
+  padding-right: 36px;
+}
+
+.demo-app-calendar :deep(.fc-week-spread-btn) {
+  position: absolute;
+  top: 2px;
+  right: -12px;
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  color: #546e7a;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+  margin-top: 25%
+}
+
+.demo-app-calendar :deep(.fc-week-spread-btn:hover) {
+  background: rgba(25, 118, 210, 0.12);
+  color: #1976d2;
+}
+
+.demo-app-calendar :deep(.fc-week-spread-btn .material-icons) {
+  font-size: 20px;
+  line-height: 1;
 }
 
 .demo-app-calendar :deep(.fc-copy-drag-active .fc-event-mirror) {

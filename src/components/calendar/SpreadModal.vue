@@ -3,6 +3,7 @@ import { ref, watch, computed } from 'vue'
 
 const props = defineProps<{
   modelValue: boolean
+  mode?: 'lesson' | 'week'
   eventTitle?: string
   busy?: boolean
 }>()
@@ -26,6 +27,12 @@ const dayOptions = [
   { value: 5, label: 'Sat' },
   { value: 6, label: 'Sun' },
 ]
+
+const isWeekMode = computed(() => props.mode === 'week')
+
+const modalTitle = computed(() =>
+  isWeekMode.value ? 'Spread all week lessons' : 'Spread lesson'
+)
 
 const canSave = computed(
   () => weeks.value >= 1 && selectedWeekdays.value.length > 0
@@ -71,7 +78,7 @@ function onSave() {
     <q-card class="spread-modal">
       <q-card-section>
         <div class="text-h6">
-          Spread lesson
+          {{ modalTitle }}
         </div>
         <div
           v-if="eventTitle"
@@ -121,6 +128,7 @@ function onSave() {
           flat
           label="Cancel"
           color="primary"
+          :disable="busy"
           @click="close"
         />
         <q-btn

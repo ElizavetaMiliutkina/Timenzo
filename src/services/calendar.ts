@@ -57,6 +57,12 @@ export interface SpreadEventPayload {
     weekdays: number[]
 }
 
+export interface SpreadWeekEventPayload {
+    week_start: string // yyyy-MM-dd (Monday)
+    weeks: number
+    weekdays: number[]
+}
+
 export interface SpreadEventResult {
     message: string
     created_count: number
@@ -71,6 +77,18 @@ export const spreadEvent = async (
         return data
     } catch (error) {
         console.error('Error spreading events', error)
+        return null
+    }
+}
+
+export const spreadWeekEvent = async (
+    payload: SpreadWeekEventPayload
+): Promise<SpreadEventResult | null> => {
+    try {
+        const { data } = await axios.post<SpreadEventResult>('/events/spread-week', payload)
+        return data
+    } catch (error) {
+        console.error('Error spreading week events', error)
         return null
     }
 }
