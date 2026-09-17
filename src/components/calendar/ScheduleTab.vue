@@ -178,7 +178,7 @@ function mountWeekSpreadButton(arg: DayCellMountArg) {
   const m = arg.date.getUTCMonth() + 1
   const d = arg.date.getUTCDate()
   const day = DateTime.fromObject({ year: y, month: m, day: d }, { zone })
-  if (!day.isValid || day.weekday !== 7) return
+  if (!day.isValid || day.weekday !== 6) return
 
   const weekStart = day.minus({ days: 6 })
   const weekStartIso = weekStart.toFormat('yyyy-MM-dd')
@@ -628,12 +628,7 @@ b {
 
 .demo-app-calendar :deep(.fc-week-spread-btn) {
   position: absolute;
-  top: 2px;
   right: -12px;
-  z-index: 6;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   width: 30px;
   height: 30px;
   padding: 0;
@@ -643,7 +638,6 @@ b {
   color: #546e7a;
   cursor: pointer;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
-  margin-top: 25%
 }
 
 .demo-app-calendar :deep(.fc-week-spread-btn:hover) {
