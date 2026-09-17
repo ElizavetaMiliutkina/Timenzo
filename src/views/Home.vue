@@ -265,6 +265,15 @@ watch(openStudentModal, (val) => {
             @click="startInlineEdit(row, 'name')"
           >
             {{ row.name }}
+            <q-tooltip
+              v-if="row.name"
+              anchor="top middle"
+              self="bottom middle"
+              :offset="[0, 4]"
+              max-width="400px"
+            >
+              {{ row.name }}
+            </q-tooltip>
           </div>
         </q-td>
       </template>
@@ -304,6 +313,14 @@ watch(openStudentModal, (val) => {
             @click="startInlineEdit(row, 'price')"
           >
             {{ row.price }} {{ currencies.find((c) => c.id === row.currency_id)?.symbol ?? '' }}
+            <q-tooltip
+              anchor="top middle"
+              self="bottom middle"
+              :offset="[0, 4]"
+              max-width="400px"
+            >
+              {{ row.price }} {{ currencies.find((c) => c.id === row.currency_id)?.symbol ?? '' }}
+            </q-tooltip>
           </div>
         </q-td>
       </template>
@@ -322,6 +339,15 @@ watch(openStudentModal, (val) => {
             @click="startInlineEdit(row, 'timezone')"
           >
             {{ row.timezone?.label }}
+            <q-tooltip
+              v-if="row.timezone?.label"
+              anchor="top middle"
+              self="bottom middle"
+              :offset="[0, 4]"
+              max-width="400px"
+            >
+              {{ row.timezone?.label }}
+            </q-tooltip>
           </div>
         </q-td>
       </template>
@@ -344,6 +370,15 @@ watch(openStudentModal, (val) => {
             @click="startInlineEdit(row, 'comment')"
           >
             {{ row.comment }}
+            <q-tooltip
+              v-if="row.comment"
+              anchor="top middle"
+              self="bottom middle"
+              :offset="[0, 4]"
+              max-width="400px"
+            >
+              {{ row.comment }}
+            </q-tooltip>
           </div>
         </q-td>
       </template>
@@ -368,6 +403,15 @@ watch(openStudentModal, (val) => {
             @click="startInlineEdit(row, `extra:${getColumnKey(col,idx)}`)"
           >
             {{ formatExtraValue(row.extra?.[getColumnKey(col, idx)]) }}
+            <q-tooltip
+              v-if="formatExtraValue(row.extra?.[getColumnKey(col, idx)])"
+              anchor="top middle"
+              self="bottom middle"
+              :offset="[0, 4]"
+              max-width="400px"
+            >
+              {{ formatExtraValue(row.extra?.[getColumnKey(col, idx)]) }}
+            </q-tooltip>
           </div>
         </q-td>
       </template>
